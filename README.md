@@ -2,16 +2,20 @@
 
 #### 介绍
 短时间内更加公平的随机点名系统
+**使用了Minecraft的幸运方块MOD作为图标，如果不能使用，请立即告诉我**
 
 #### 软件架构
-软件架构说明
+使用python 3.8开发。
 
 
 #### 安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1.  安装python 3.8
+2.  下载`main.py` `favicon.ico`文件
+3.  安装库`tkinter` `msvc-runtime` `matplotlib` `ttkbootstrap` `pyinstaller`
+4.  按照main.py文件内的指示填写名单和分隔符
+5.  运行main.py文件，检验程序是否可以运行
+6.  运行命令 `pyinstaller -F -w -i favicon.ico main.py` 以打包成可执行文件
 
 #### 使用说明
 
