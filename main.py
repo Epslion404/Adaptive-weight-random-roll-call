@@ -48,11 +48,12 @@ selected = None
 
 enable_weight = tk.IntVar(value=1)
 
-if_repeated = tk.IntVar()
+# 标志：是否启用重复
+none_repeat = tk.IntVar()
 
-check_box = None
+non_repeat_check_box = None
 
-check_box_text = tk.StringVar(value='{} / {}'.format(len(name), len(non_repeat_name)))
+none_repeat_text = tk.StringVar(value='{} / {}'.format(len(name), len(non_repeat_name)))
 
 handle = {"control": 1}
 
@@ -93,13 +94,13 @@ def cb2():
 
 
 def flash_name() -> None:
-    global pauseOrContinue, name, selected, if_repeated, non_repeat_name, check_box_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity, Exit
+    global pauseOrContinue, name, selected, none_repeat, non_repeat_name, none_repeat_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity, Exit
     for i in non_repeat_name:
         weight_name1.append(weight[name.index(i)])
 
     while True:
         if pauseOrContinue:
-            if if_repeated.get() == 0:
+            if none_repeat.get() == 0:
                 if enable_weight.get() == 1:
                     selected = random.choices(name, weights=weight, k=1)[0]
                 else:
@@ -114,7 +115,7 @@ def flash_name() -> None:
             if activated_f:
                 activated_f = False
         else:
-            if if_repeated.get() == 1:
+            if none_repeat.get() == 1:
                 if selected in non_repeat_name:
                     if NameSelect1 != []:
                         # print(NameSelect1)
@@ -150,7 +151,7 @@ def flash_name() -> None:
                 # print(weight_name1)
                 activated_f = True
 
-        check_box_text.set('不重复({}/{})'.format(len(non_repeat_name), len(name)))
+        none_repeat_text.set('不重复({}/{})'.format(len(non_repeat_name), len(name)))
         # print(len(name1), len(name))
         time.sleep(0.01)
 
@@ -242,7 +243,7 @@ def setting_window_init():
     root1.resizable(height=False, width=False)
     root1.attributes('-topmost', True)
     root1.protocol("WM_DELETE_WINDOW", setting_window_on_closing)
-    root1.iconbitmap(r'c:\favicon.ico')
+    root1.iconbitmap('favicon.ico')
 
     if handle["control"] == 0:
         return
@@ -319,14 +320,14 @@ def cb4():
 
 
 def config_file_error():
-    os.remove(r'c:\record.dat')
+    os.remove('record.dat')
     sys.exit()
 
 
-def closing():
+def on_root_closing():
     global root, root1, frequency, init_time
     root.destroy()
-    with open(r'c:\record.dat', 'w', encoding='utf-8') as f:
+    with open('record.dat', 'w', encoding='utf-8') as f:
         for i in non_repeat_name:
             f.write(i + ';')
         f.write('\n')
@@ -347,7 +348,7 @@ def main() -> None:
     """
     初始化随机点名
     """
-    global root, shown_name, name, selected, if_repeated, check_box_text, root1, NameSelect, non_repeat_name, check_box, frequency, init_time
+    global root, shown_name, name, selected, none_repeat, none_repeat_text, root1, NameSelect, non_repeat_name, non_repeat_check_box, frequency, init_time
 
     # 定义样式
     style = tbs.style.Style(theme='minty')
@@ -356,7 +357,7 @@ def main() -> None:
     # 根窗口
     root.title('随机点名')
     root.geometry("0x0")
-    root.iconbitmap(r'c:\favicon.ico')
+    root.iconbitmap('favicon.ico')
     root.overrideredirect(True)
 
     # 加载窗口
@@ -405,35 +406,43 @@ def main() -> None:
     mpl.rcParams['font.sans-serif'] = ['FangSong']
     mpl.rcParams['font.size'] = 10
     mpl.rcParams['axes.unicode_minus'] = False
+
+    # 设置随机数种子
     random.seed(time.time())
 
-    root.geometry("240x120")
+    # 设置根窗口
+    root.geometry("240x120+0+0")
     root.resizable(height=False, width=False)
     root.attributes('-topmost', True)
     # root.attributes('-toolwindow', True)
-    root.protocol("WM_DELETE_WINDOW", closing)
-    init_window.destroy()
+    root.protocol("WM_DELETE_WINDOW", on_root_closing)
+    init_window.destroy()  # 销毁加载窗口
     root.overrideredirect(False)
 
+    # 显示名字的标签
     name_label = tk.Label(root, textvariable=shown_name, font=("黑体", 40, "bold"), relief=tk.RIDGE)
     name_label.place(relx=0.1, rely=0.5)
     name_label.pack(expand=True)
 
+    # 暂停/继续滚动按钮
     button = tk.Button(root, text="暂停/继续", command=cb1)
     button.pack(expand=True)
 
-    if_repeated = tk.IntVar()
-    check_box_text = tk.StringVar(value='不重复({}/{})'.format(len(non_repeat_name), len(name)))
+    # 置0
+    none_repeat = tk.IntVar()
+    # 复选框文本
+    none_repeat_text = tk.StringVar(value=f'不重复({len(non_repeat_name)}/{len(name)})')
 
-    setting = tk.Button(root, text="自定义", command=setting_window)
-    setting.pack(side=tk.LEFT)
+    # 自定义按钮
+    customize_button = tk.Button(root, text="自定义", command=setting_window)
+    customize_button.pack(side=tk.LEFT)
 
-    check_box = tk.Checkbutton(root, textvariable=check_box_text, variable=if_repeated)
-    if_repeated.set(1)
-    check_box.pack(expand=True, side=tk.LEFT)
+    non_repeat_check_box = tk.Checkbutton(root, textvariable=none_repeat_text, variable=none_repeat)
+    none_repeat.set(1)
+    non_repeat_check_box.pack(expand=True, side=tk.LEFT)
 
-    b_reset = tk.Button(root, text="重置", command=cb2)
-    b_reset.pack(side=tk.LEFT)
+    reset_button = tk.Button(root, text="重置", command=cb2)
+    reset_button.pack(side=tk.LEFT)
 
     flash_name_thread = threading.Thread(target=flash_name)
     flash_name_thread.setDaemon(True)
