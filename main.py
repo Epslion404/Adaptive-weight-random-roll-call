@@ -1,34 +1,36 @@
-# -*- coding:utf-8 -*-
-# 开始于 2024‎年‎3‎月‎17‎日，‏‎15:10:45
+# -*- coding:utf-8 -*- #
+# 开始于 2024 年 3 月 17 日，15:10:45
 # 该文件仅达到了能够使用的水平
 # 可能存在各种BUG
-# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.transforms as mtransforms
 import matplotlib.pyplot as plt
 import ttkbootstrap as tbs
 from pylab import mpl
 import tkinter as tk
 import numpy as np
-# import matplotlib
 import threading
 import ctypes
 import random
 import copy
 import time
+import json
 import sys
 import os
 
-origin_list: list = str('将这个字符串替换为所有的名字，名字之间使用分隔符分隔').split('将这个字符串替换为名字之间的分隔符')
+# name_list: list = str('将这个字符串替换为所有的名字，名字之间使用分隔符分隔').split('将这个字符串替换为名字之间的分隔符')
+# 所有名字
+name_list: list = str('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z').split(' ')
 
+# 数据记录的起始时间
 init_time = ''
 
-name: list = copy.deepcopy(origin_list)
+name: list = copy.deepcopy(name_list)
 
-name1: list = copy.deepcopy(origin_list)
+non_repeat_name: list = copy.deepcopy(name_list)
 
-frequency: list = [0 for i in range(len(origin_list))]
+frequency: list = [0 for i in range(len(name_list))]
 
-weight: list = [1.0 for j in range(len(origin_list))]
+weight: list = [1.0 for j in range(len(name_list))]
 
 activated_f = False
 
@@ -50,7 +52,7 @@ if_repeated = tk.IntVar()
 
 check_box = None
 
-check_box_text = tk.StringVar(value='{} / {}'.format(len(name), len(name1)))
+check_box_text = tk.StringVar(value='{} / {}'.format(len(name), len(non_repeat_name)))
 
 handle = {"control": 1}
 
@@ -80,82 +82,77 @@ def cb1():
 
 def cb2():
     # print('cb2')
-    global name1, weight_name1, NameSelect1, pauseOrContinue
+    global non_repeat_name, weight_name1, NameSelect1, pauseOrContinue
     if not pauseOrContinue:
         pass
     else:
-        name1 = copy.deepcopy(name)
+        non_repeat_name = copy.deepcopy(name)
         weight_name1 = copy.deepcopy(weight)
         for i in NameSelect1:
             i.set(1)
 
 
 def flash_name() -> None:
-    global pauseOrContinue, name, selected, if_repeated, name1, check_box_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity
-    for i in name1:
+    global pauseOrContinue, name, selected, if_repeated, non_repeat_name, check_box_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity, Exit
+    for i in non_repeat_name:
         weight_name1.append(weight[name.index(i)])
 
     while True:
-        try:
-            if pauseOrContinue:
-                if if_repeated.get() == 0:
-                    if enable_weight.get() == 1:
-                        selected = random.choices(name, weights=weight, k=1)[0]
-                    else:
-                        selected = random.choice(name)
-                    shown_name.set(selected)
+        if pauseOrContinue:
+            if if_repeated.get() == 0:
+                if enable_weight.get() == 1:
+                    selected = random.choices(name, weights=weight, k=1)[0]
                 else:
-                    if enable_weight.get() == 1:
-                        selected = random.choices(name1, weights=weight_name1, k=1)[0]
-                    else:
-                        selected = random.choice(name1)
-                    shown_name.set(selected)
-                if activated_f:
-                    activated_f = False
+                    selected = random.choice(name)
+                shown_name.set(selected)
             else:
-                if if_repeated.get() == 1:
-                    if selected in name1:
-                        if NameSelect1 != []:
-                            # print(NameSelect1)
-                            NameSelect1[origin_list.index(selected)].set(0)
-                        name1.remove(selected)
-                        activated_f = False
-                    if not name1:
-                        random.seed(time.time())
-                        name1 = copy.deepcopy(name)
-                if not activated_f:
-                    frequency[name.index(selected)] += 1
-                    # print(frequency)
-                    total = 0
-                    average = (sum(frequency) / len(frequency)) + 1
-                    for i in frequency:
-                        if i + 1 > average:
-                            total += (1 / Feedback_intensity) / (i + 1)
-                        elif i + 1 < average:
-                            total += Feedback_intensity / (i + 1)
-                        else:
-                            total += 1 / (i + 1)
-                    for w, f in zip(range(len(weight)), frequency):
-                        if f + 1 > average:
-                            weight[w] = ((1 / Feedback_intensity) / (f + 1)) / total
-                        elif f + 1 < average:
-                            weight[w] = (Feedback_intensity / (f + 1)) / total
-                        else:
-                            weight[w] = (1 / (f + 1)) / total
-                    # print(weight)
-                    weight_name1 = []
-                    for i in name1:
-                        weight_name1.append(weight[name.index(i)])
-                    # print(weight_name1)
-                    activated_f = True
+                if enable_weight.get() == 1:
+                    selected = random.choices(non_repeat_name, weights=weight_name1, k=1)[0]
+                else:
+                    selected = random.choice(non_repeat_name)
+                shown_name.set(selected)
+            if activated_f:
+                activated_f = False
+        else:
+            if if_repeated.get() == 1:
+                if selected in non_repeat_name:
+                    if NameSelect1 != []:
+                        # print(NameSelect1)
+                        NameSelect1[name_list.index(selected)].set(0)
+                    non_repeat_name.remove(selected)
+                    activated_f = False
+                if not non_repeat_name:
+                    random.seed(time.time())
+                    non_repeat_name = copy.deepcopy(name)
+            if not activated_f:
+                frequency[name.index(selected)] += 1
+                # print(frequency)
+                total = 0
+                average = (sum(frequency) / len(frequency)) + 1
+                for i in frequency:
+                    if i + 1 > average:
+                        total += (1 / Feedback_intensity) / (i + 1)
+                    elif i + 1 < average:
+                        total += Feedback_intensity / (i + 1)
+                    else:
+                        total += 1 / (i + 1)
+                for w, f in zip(range(len(weight)), frequency):
+                    if f + 1 > average:
+                        weight[w] = ((1 / Feedback_intensity) / (f + 1)) / total
+                    elif f + 1 < average:
+                        weight[w] = (Feedback_intensity / (f + 1)) / total
+                    else:
+                        weight[w] = (1 / (f + 1)) / total
+                # print(weight)
+                weight_name1 = []
+                for i in non_repeat_name:
+                    weight_name1.append(weight[name.index(i)])
+                # print(weight_name1)
+                activated_f = True
 
-            check_box_text.set('不重复({}/{})'.format(len(name1), len(name)))
-            # print(len(name1), len(name))
-            time.sleep(0.01)
-            continue
-        except ValueError:
-            # print(len(weight), len(weight_name1), len(name), len(name1))
-            pass
+        check_box_text.set('不重复({}/{})'.format(len(non_repeat_name), len(name)))
+        # print(len(name1), len(name))
+        time.sleep(0.01)
 
 
 def setting_window():
@@ -200,24 +197,24 @@ def show_data():
     rect1 = [0.05, 0.55, 0.92, 0.4]
     rect2 = [0.05, 0.06, 0.92, 0.4]
     ax1 = plt.axes(rect1)
-    plt.bar(origin_list, y1, color='green')
+    plt.bar(name_list, y1, color='green')
     plt.axhline(y=average - 1, color='r', label="AVERAGE")
     plt.ylim(bottom=0)
     plt.ylabel('频率')
     plt.grid(axis='y')
     plt.xticks(rotation=45, fontsize=9)
-    ax1.set_xlim(-1.0, len(origin_list) + 0.1)
+    ax1.set_xlim(-1.0, len(name_list) + 0.1)
     label1 = ax1.get_xticklabels()
     for label in label1:
         offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
         label.set_transform(label.get_transform() + offset)
 
     ax2 = plt.axes(rect2)
-    plt.bar(origin_list, y2, color='red')
+    plt.bar(name_list, y2, color='red')
     plt.ylabel('权重')
     plt.grid(axis='y')
     plt.xticks(rotation=45, fontsize=9)
-    ax2.set_xlim(-1.0, len(origin_list) + 0.1)
+    ax2.set_xlim(-1.0, len(name_list) + 0.1)
     label2 = ax2.get_xticklabels()
     for label in label2:
         offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
@@ -254,7 +251,7 @@ def setting_window_init():
 
     SelectGroup = []
     SelectGroup1 = []
-    length = len(origin_list)
+    length = len(name_list)
 
     name_group = tk.LabelFrame(root1, text='可重复组')
     name_group.grid(row=0, column=0, columnspan=3)
@@ -263,7 +260,7 @@ def setting_window_init():
         t = tk.IntVar()
         t.set(1)
         NameSelect.append(t)
-        but = tk.Checkbutton(name_group, text=origin_list[i], variable=NameSelect[i], command=cb4)
+        but = tk.Checkbutton(name_group, text=name_list[i], variable=NameSelect[i], command=cb4)
         but.grid(row=i // 3, column=i % 3)
         SelectGroup.append(but)
 
@@ -272,12 +269,12 @@ def setting_window_init():
 
     for i in range(length):
         t = tk.IntVar()
-        if origin_list[i] in name1:
+        if name_list[i] in non_repeat_name:
             t.set(1)
         else:
             t.set(0)
         NameSelect1.append(t)
-        but = tk.Checkbutton(name1_group, text=origin_list[i], variable=NameSelect1[i], command=cb5)
+        but = tk.Checkbutton(name1_group, text=name_list[i], variable=NameSelect1[i], command=cb5)
         but.grid(row=i // 3, column=i % 3)
         SelectGroup1.append(but)
 
@@ -287,7 +284,7 @@ def setting_window_init():
     show_chat = tk.Button(root1, text="展示统计数据", command=lambda: inner_show_data())
     show_chat.grid(row=length // 3 + 1, column=0)
 
-    reset_b = tk.Button(root1, text="恢复默认设置", command=cb3)
+    reset_b = tk.Button(root1, text="恢复默认设置", command=config_file_error)
     reset_b.grid(row=length // 3 + 1, column=1)
 
     mode = tk.Checkbutton(root1, text='自适应权重随机模式', variable=enable_weight)
@@ -297,31 +294,31 @@ def setting_window_init():
 
 
 def cb5():
-    global NameSelect1, origin_list, name1, weight_name1, weight
+    global NameSelect1, name_list, non_repeat_name, weight_name1, weight
     for i in range(len(NameSelect)):
         if NameSelect1[i].get() == 1:
-            if not (origin_list[i] in name1):
-                name1.append(origin_list[i])
+            if not (name_list[i] in non_repeat_name):
+                non_repeat_name.append(name_list[i])
         if NameSelect1[i].get() == 0:
-            if origin_list[i] in name1:
-                name1.remove(origin_list[i])
+            if name_list[i] in non_repeat_name:
+                non_repeat_name.remove(name_list[i])
     weight_name1 = []
-    for i in name1:
-        weight_name1.append(weight[origin_list.index(i)])
+    for i in non_repeat_name:
+        weight_name1.append(weight[name_list.index(i)])
 
 
 def cb4():
-    global NameSelect, origin_list, name
+    global NameSelect, name_list, name
     for i in range(len(NameSelect)):
         if NameSelect[i].get() == 1:
-            if not (origin_list[i] in name):
-                name.append(origin_list[i])
+            if not (name_list[i] in name):
+                name.append(name_list[i])
         if NameSelect[i].get() == 0:
-            if origin_list[i] in name:
-                name.remove(origin_list[i])
+            if name_list[i] in name:
+                name.remove(name_list[i])
 
 
-def cb3():
+def config_file_error():
     os.remove(r'c:\record.dat')
     sys.exit()
 
@@ -330,7 +327,7 @@ def closing():
     global root, root1, frequency, init_time
     root.destroy()
     with open(r'c:\record.dat', 'w', encoding='utf-8') as f:
-        for i in name1:
+        for i in non_repeat_name:
             f.write(i + ';')
         f.write('\n')
         for i in frequency:
@@ -347,45 +344,54 @@ def is_admin():
 
 
 def main() -> None:
-    global root, shown_name, name, selected, if_repeated, check_box_text, root1, NameSelect, name1, check_box, frequency, init_time
+    """
+    初始化随机点名
+    """
+    global root, shown_name, name, selected, if_repeated, check_box_text, root1, NameSelect, non_repeat_name, check_box, frequency, init_time
 
+    # 定义样式
     style = tbs.style.Style(theme='minty')
-    TOP6 = style.master
+    top6 = style.master
 
-    # matplotlib.use('TkAgg')
-
+    # 根窗口
     root.title('随机点名')
     root.geometry("0x0")
     root.iconbitmap(r'c:\favicon.ico')
     root.overrideredirect(True)
 
+    # 加载窗口
     init_window = tk.Toplevel(root)
     init_window.title('随机点名')
     init_window.geometry("240x120+50+50")
     init_window.resizable(height=False, width=False)
     init_window.overrideredirect(True)
 
-    label1 = tk.Label(init_window, text='加载中。。。', font=("黑体", 20, "bold"), relief=tk.RIDGE)
+    # 加载窗口的文字
+    label1 = tk.Label(init_window, text='加载中...', font=("黑体", 20, "bold"), relief=tk.RIDGE)
     label1.place(relx=0.1, rely=0.5)
     label1.pack(expand=True)
 
-    if not is_admin():
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, -1)
-        sys.exit()
+    # 检测配置文件是否存在
+    # if not os.path.exists('record.dat'):
+    #     with open('record.dat', 'w', encoding='utf-8') as f:
+    #         for i in name_list:
+    #             f.write(i + ';')
+    #         f.write('\n')
+    #         for i in frequency:
+    #             f.write(str(i) + ';')
+    #         f.write('\n' + time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+    if not os.path.exists('record.dat'):
+        data = {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))],
+                "init_time": time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())}
+        json_string = json.dumps(data)
+        with open('record.dat', 'w', encoding='utf-8') as f:
+            f.write(json_string)
 
-    if not os.path.exists(r'c:\record.dat'):
-        with open(r'c:\record.dat', 'w', encoding='utf-8') as f:
-            for i in origin_list:
-                f.write(i + ';')
-            f.write('\n')
-            for i in frequency:
-                f.write(str(i) + ';')
-            f.write('\n' + time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
-
-    with open(r'c:\record.dat', 'r', encoding='utf-8') as f:
+    # 读取配置文件
+    with open('record.dat', 'r', encoding='utf-8') as f:
         try:
             read = f.read()
-            name1 = str(read.split('\n')[0]).split(';')[:-1]
+            non_repeat_name = str(read.split('\n')[0]).split(';')[:-1]
             # print(len(name1))
             temp: list = str(read.split('\n')[1]).split(';')[:-1]
             for i in range(len(frequency)):
@@ -393,8 +399,10 @@ def main() -> None:
             init_time = read.split('\n')[2]
         except:
             f.close()
-            cb3()
-    mpl.rcParams['font.sans-serif'] = ['FangSong']  # 指定默认字体
+            config_file_error()
+
+    # 指定默认字体
+    mpl.rcParams['font.sans-serif'] = ['FangSong']
     mpl.rcParams['font.size'] = 10
     mpl.rcParams['axes.unicode_minus'] = False
     random.seed(time.time())
@@ -415,7 +423,7 @@ def main() -> None:
     button.pack(expand=True)
 
     if_repeated = tk.IntVar()
-    check_box_text = tk.StringVar(value='不重复({}/{})'.format(len(name1), len(name)))
+    check_box_text = tk.StringVar(value='不重复({}/{})'.format(len(non_repeat_name), len(name)))
 
     setting = tk.Button(root, text="自定义", command=setting_window)
     setting.pack(side=tk.LEFT)
