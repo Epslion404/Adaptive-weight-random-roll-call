@@ -2,14 +2,17 @@
 # 开始于 2024 年 3 月 17 日，15:10:45
 # 该文件仅达到了能够使用的水平
 # 可能存在各种BUG
+
 import matplotlib.transforms as mtransforms
 import matplotlib.pyplot as plt
 import ttkbootstrap as tbs
+import tkinter.messagebox
 from pylab import mpl
 import tkinter as tk
 import numpy as np
+import webbrowser
 import threading
-import ctypes
+import inspect
 import random
 import copy
 import time
@@ -17,8 +20,8 @@ import json
 import sys
 import os
 
-# name_list: list = str('将这个字符串替换为所有的名字，名字之间使用分隔符分隔').split('将这个字符串替换为名字之间的分隔符')
 # 所有名字
+# name_list: list = str('将这个字符串替换为所有的名字，名字之间使用分隔符分隔').split('将这个字符串替换为名字之间的分隔符')
 name_list: list = str('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z').split(' ')
 
 # 数据记录的起始时间
@@ -89,6 +92,12 @@ unrepeatable_weight = []
 # 负反馈力度
 Feedback_intensity = 2
 
+# 配置文件内容
+DATA = {}
+
+# 课堂选择
+Subject = ''
+
 
 def inv_poc() -> None:
     """
@@ -105,7 +114,7 @@ def reset_none_repeat() -> None:
     """
     global unrepeatable_names, unrepeatable_weight, record_name_unrepeatable, pauseOrContinue
     if not pauseOrContinue:
-        return None
+        tkinter.messagebox.showerror("Error", "不能在暂停滚动时重置名单")
     else:
         unrepeatable_names = copy.deepcopy(repeatable_name)
         unrepeatable_weight = copy.deepcopy(weight)
@@ -115,7 +124,7 @@ def reset_none_repeat() -> None:
 
 
 def flash_name() -> None:
-    global pauseOrContinue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, Feedback_intensity, Exit
+    global pauseOrContinue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, Feedback_intensity
 
     # 同步权重
     for i in unrepeatable_names:
@@ -329,7 +338,17 @@ def customize_window_init() -> None:
 
     # 确认按钮
     return_to_root_button = tk.Button(customize_window, text="确认", command=setting_window_on_closing)
-    return_to_root_button.grid(row=length // 3 + 2, column=6)
+    return_to_root_button.grid(row=length // 3 + 4, column=6)
+
+    # 关于
+    about_label = tk.Button(customize_window, text="对本软件使用、转载、修改等请遵守开源协议")
+    about_label.grid(row=length // 3 + 3, columnspan=4)
+
+    gitee_link_label = tk.Button(customize_window, text="gitee", fg="blue", cursor="hand2", command=lambda: webbrowser.open_new("https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call/blob/master/LICENSE"))
+    gitee_link_label.grid(row=length // 3 + 3, column=4)
+
+    github_link_label = tk.Button(customize_window, text="github", fg="blue", cursor="hand2",command=lambda: webbrowser.open_new("https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call/blob/master/LICENSE"))
+    github_link_label.grid(row=length // 3 + 3, column=5)
 
     # 展示统计数据按钮
     show_chat_button = tk.Button(customize_window, text="展示统计数据", command=show_data_in_customize)
@@ -337,7 +356,7 @@ def customize_window_init() -> None:
 
     # 恢复默认设置按钮
     reset_button = tk.Button(customize_window, text="恢复默认设置", command=config_file_error)
-    reset_button.grid(row=length // 3 + 1, column=1)
+    reset_button.grid(row=length // 3 + 1, column=2)
 
     adaptive_weight_mode = tk.Checkbutton(customize_window, text='自适应权重随机模式', variable=enable_weight)
     adaptive_weight_mode.grid(row=length // 3 + 1, column=4)
@@ -374,44 +393,70 @@ def config_file_error() -> None:
     """
     删除配置文件
     """
+    caller_frame = inspect.stack()[1]
+    caller_file = caller_frame[1]
+    caller_line = caller_frame[2]
+    caller_function = caller_frame[3]
+    print("Caller file:", caller_file)
+    print("Caller line:", caller_line)
+    print("Caller function:", caller_function)
     os.remove('record.dat')
     sys.exit()
 
 
 def on_root_closing() -> None:
-    global root, customize_window, frequency, init_time
+    global root, customize_window, frequency, init_time, DATA
     root.destroy()
-    data = {"non_repeat_name": unrepeatable_names, "frequency": frequency,
-            "init_time": init_time}
+    DATA[Subject]['non_repeat_name'] = unrepeatable_names
+    DATA[Subject]['frequency'] = frequency
+    # print(Subject, frequency)
+    # print(DATA[Subject]['frequency'])
     with open('record.dat', 'w', encoding='utf-8') as f:
-        json.dump(data, f)
+        json.dump(DATA, f)
+        f.close()
     sys.exit()
-
-
-def is_admin():
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
 
 
 def main() -> None:
     """
     初始化随机点名
     """
-    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pauseOrContinue
+    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pauseOrContinue, DATA, Subject
+
+    def class_select_cb(index: int):
+        global Subject, DATA, unrepeatable_names, frequency
+        try:
+            subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
+            Subject = subjects[index]
+            unrepeatable_names = DATA[Subject]['non_repeat_name']
+            frequency = DATA[Subject]['frequency']
+            select_window.destroy()
+        except Exception as ex:
+            print(f'Error raised: {ex}')
+            config_file_error()
+        # 设置根窗口
+        root.geometry("240x120+0+0")
+        root.resizable(height=False, width=False)
+        root.attributes('-topmost', True)
+        # root.attributes('-toolwindow', True)
+        root.protocol("WM_DELETE_WINDOW", on_root_closing)
+        root.overrideredirect(False)
+
+        flash_name_thread = threading.Thread(target=flash_name)
+        flash_name_thread.daemon = True  # 守护模式
+        flash_name_thread.start()
+
+        root.mainloop()
 
     # 定义样式
     style = tbs.style.Style(theme='minty')
     top6 = style.master
 
-    # matplotlib.use('agg')
-
     # 根窗口
     root.title('随机点名')
     root.geometry("0x0")
-    root.iconbitmap('favicon.ico')
     root.overrideredirect(True)
+    root.iconbitmap('favicon.ico')
 
     # 加载窗口
     init_window = tk.Toplevel(root)
@@ -427,24 +472,35 @@ def main() -> None:
 
     # 检测配置文件是否存在
     if not os.path.exists('record.dat'):
-        data = {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))],
+        DATA = {"语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "英语": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "物理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "化学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "生物": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "历史": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "政治": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+                "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
                 "init_time": time.strftime("%Y年%b%d日 %a %H:%M:%S", time.localtime())}
         with open('record.dat', 'w', encoding='utf-8') as f:
-            json.dump(data, f)
+            json.dump(DATA, f)
+            f.close()
 
     # 读取配置文件
     with open('record.dat', 'r', encoding='utf-8') as f:
         try:
-            read = json.load(f)
-
-            unrepeatable_names = read['non_repeat_name']
-            frequency = read['frequency']
-            init_time = read['init_time']
-        except json.decoder.JSONDecodeError:
+            DATA = json.load(f)
+            subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
+            # for i in subjects:
+            #     if len(DATA[i]) != 2:
+            #         raise RuntimeError("Config file error")
+            init_time = DATA['init_time']
+        except Exception as ex:
+            print(f'Error raised: {ex}')
             f.close()
             config_file_error()
 
-    print(init_time)
     # 指定默认字体
     mpl.rcParams['font.sans-serif'] = ['FangSong']
     mpl.rcParams['font.size'] = 10
@@ -452,15 +508,6 @@ def main() -> None:
 
     # 设置随机数种子
     random.seed(time.time())
-
-    # 设置根窗口
-    root.geometry("240x120+0+0")
-    root.resizable(height=False, width=False)
-    root.attributes('-topmost', True)
-    # root.attributes('-toolwindow', True)
-    root.protocol("WM_DELETE_WINDOW", on_root_closing)
-    init_window.destroy()  # 销毁加载窗口
-    root.overrideredirect(False)
 
     # 显示名字的标签
     name_label = tk.Label(root, textvariable=shown_name, font=("黑体", 40, "bold"), relief=tk.RIDGE)
@@ -487,11 +534,37 @@ def main() -> None:
     reset_button = tk.Button(root, text="重置", command=reset_none_repeat)
     reset_button.pack(side=tk.LEFT)
 
-    flash_name_thread = threading.Thread(target=flash_name)
-    flash_name_thread.daemon = True  # 守护模式
-    flash_name_thread.start()
-    # print(NameSelect[0].get())
-    root.mainloop()
+    init_window.destroy()  # 销毁加载窗口
+    select_window = tk.Tk()
+    select_window.geometry("180x120+50+50")
+    select_window.resizable(height=False, width=False)
+    select_window.overrideredirect(True)
+    select_window.attributes('-topmost', True)
+    label1 = tk.Label(select_window, text='选择当堂科目', font=("黑体", 20, "bold"), relief=tk.RIDGE)
+    label1.grid(row=0, columnspan=5, pady=5)
+    button01 = tk.Button(select_window, text="语文", command=lambda: class_select_cb(0))
+    button01.grid(row=1, column=0, pady=5)
+    button02 = tk.Button(select_window, text="数学", command=lambda: class_select_cb(1))
+    button02.grid(row=1, column=1, pady=5)
+    button03 = tk.Button(select_window, text="英语", command=lambda: class_select_cb(2))
+    button03.grid(row=1, column=2, pady=5)
+    button04 = tk.Button(select_window, text="物理", command=lambda: class_select_cb(3))
+    button04.grid(row=1, column=3, pady=5)
+    button05 = tk.Button(select_window, text="化学", command=lambda: class_select_cb(4))
+    button05.grid(row=1, column=4, pady=5)
+    button06 = tk.Button(select_window, text="生物", command=lambda: class_select_cb(5))
+    button06.grid(row=2, column=0, pady=5)
+    button07 = tk.Button(select_window, text="历史", command=lambda: class_select_cb(6))
+    button07.grid(row=2, column=1, pady=5)
+    button08 = tk.Button(select_window, text="政治", command=lambda: class_select_cb(7))
+    button08.grid(row=2, column=2, pady=5)
+    button09 = tk.Button(select_window, text="地理", command=lambda: class_select_cb(8))
+    button09.grid(row=2, column=3, pady=5)
+    button10 = tk.Button(select_window, text="其他", command=lambda: class_select_cb(9))
+    button10.grid(row=2, column=4, pady=5)
+    # print(DATA)
+    select_window.mainloop()
+
     return None
 
 

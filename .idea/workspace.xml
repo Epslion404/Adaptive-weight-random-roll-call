@@ -4,11 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f607af11-52ab-4632-8f27-08200c8bb330" name="更改" comment="部分重命并添加了注释-2">
+    <list default="true" id="f607af11-52ab-4632-8f27-08200c8bb330" name="更改" comment="版本更新v1.0.6">
+      <change afterPath="$PROJECT_DIR$/install modules.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pack to exe.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Adaptive-weight-random-roll-call.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Adaptive-weight-random-roll-call.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pack to exe.bat" beforeDir="false" afterPath="$PROJECT_DIR$/pack to exe.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/record.dat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/record.dat" beforeDir="false" afterPath="$PROJECT_DIR$/record.dat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,7 +97,31 @@
       <option name="project" value="LOCAL" />
       <updated>1724899134927</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="部分重命并添加了注释，使用json保存文件">
+      <option name="closed" value="true" />
+      <created>1724907600622</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1724907600622</updated>
+    </task>
+    <task id="LOCAL-00005" summary="版本更新v1.0.6">
+      <option name="closed" value="true" />
+      <created>1724941740797</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1724941740797</updated>
+    </task>
+    <task id="LOCAL-00006" summary="版本更新v1.0.6">
+      <option name="closed" value="true" />
+      <created>1724972122416</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1724972122416</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -108,6 +138,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="部分重命并添加了注释" />
     <MESSAGE value="部分重命并添加了注释-2" />
-    <option name="LAST_COMMIT_MESSAGE" value="部分重命并添加了注释-2" />
+    <MESSAGE value="部分重命并添加了注释，使用json保存文件" />
+    <MESSAGE value="版本更新v1.0.6" />
+    <option name="LAST_COMMIT_MESSAGE" value="版本更新v1.0.6" />
   </component>
 </project>
