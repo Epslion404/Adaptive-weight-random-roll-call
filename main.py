@@ -24,109 +24,121 @@ name_list: list = str('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z').spl
 # 数据记录的起始时间
 init_time = ''
 
-name: list = copy.deepcopy(name_list)
+repeatable_name: list = copy.deepcopy(name_list)
 
-non_repeat_name: list = copy.deepcopy(name_list)
+# 不重复组名单
+unrepeatable_names: list = copy.deepcopy(name_list)
 
+# 总频率
 frequency: list = [0 for i in range(len(name_list))]
 
+# 总权重
 weight: list = [1.0 for j in range(len(name_list))]
 
 activated_f = False
 
+# 根窗口
 root = tk.Tk()
 
-root1 = None
+# 自定义窗口
+customize_window = None
 
 chart_exist = False
 
-shown_name = tk.StringVar(value=random.choice(name))
+# 根窗口展示的名字
+shown_name = tk.StringVar(value=random.choice(repeatable_name))
 
+# 标志：是否开始滚动
 pauseOrContinue = True
 
 selected = None
 
+# 标志：是否启用动态权重模式
 enable_weight = tk.IntVar(value=1)
 
 # 标志：是否启用重复
 none_repeat = tk.IntVar()
 
+# "不重复模式"复选框
 non_repeat_check_box = None
 
-none_repeat_text = tk.StringVar(value='{} / {}'.format(len(name), len(non_repeat_name)))
+# "不重复模式"复选框文本
+none_repeat_text = tk.StringVar(value=f'不重复({len(unrepeatable_names)}/{len(name_list)})')
 
-handle = {"control": 1}
+record_name_repeatable = []
 
-NameSelect = []
+record_name_unrepeatable = []
 
-NameSelect1 = []
+set_name_repeatable = []
 
-SelectGroup = []
+set_name_unrepeatable = []
 
-SelectGroup1 = []
-
-is_setting_window_init = False
+# 标志：自定义窗口是否初始化
+is_customize_window_init = False
 
 weight_name1 = []
 
 Feedback_intensity = 2  # 负反馈力度
 
 
-def cb1():
+def inv_poc() -> None:
+    """
+    反转pauseOrContinue
+    """
     global pauseOrContinue
-    if pauseOrContinue == 0:
-        pauseOrContinue = 1
-    else:
-        pauseOrContinue = 0
-    return
+    pauseOrContinue = not pauseOrContinue
+    return None
 
 
-def cb2():
-    # print('cb2')
-    global non_repeat_name, weight_name1, NameSelect1, pauseOrContinue
+def reset_none_repeat() -> None:
+    """
+    重置不重复组名单
+    """
+    global unrepeatable_names, weight_name1, record_name_unrepeatable, pauseOrContinue
     if not pauseOrContinue:
-        pass
+        return None
     else:
-        non_repeat_name = copy.deepcopy(name)
+        unrepeatable_names = copy.deepcopy(repeatable_name)
         weight_name1 = copy.deepcopy(weight)
-        for i in NameSelect1:
+        for i in record_name_unrepeatable:
             i.set(1)
+    return None
 
 
 def flash_name() -> None:
-    global pauseOrContinue, name, selected, none_repeat, non_repeat_name, none_repeat_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity, Exit
-    for i in non_repeat_name:
-        weight_name1.append(weight[name.index(i)])
+    global pauseOrContinue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity, Exit
+    for i in unrepeatable_names:
+        weight_name1.append(weight[repeatable_name.index(i)])
 
     while True:
         if pauseOrContinue:
             if none_repeat.get() == 0:
                 if enable_weight.get() == 1:
-                    selected = random.choices(name, weights=weight, k=1)[0]
+                    selected = random.choices(repeatable_name, weights=weight, k=1)[0]
                 else:
-                    selected = random.choice(name)
+                    selected = random.choice(repeatable_name)
                 shown_name.set(selected)
             else:
                 if enable_weight.get() == 1:
-                    selected = random.choices(non_repeat_name, weights=weight_name1, k=1)[0]
+                    selected = random.choices(unrepeatable_names, weights=weight_name1, k=1)[0]
                 else:
-                    selected = random.choice(non_repeat_name)
+                    selected = random.choice(unrepeatable_names)
                 shown_name.set(selected)
             if activated_f:
                 activated_f = False
         else:
             if none_repeat.get() == 1:
-                if selected in non_repeat_name:
-                    if NameSelect1 != []:
+                if selected in unrepeatable_names:
+                    if record_name_unrepeatable != []:
                         # print(NameSelect1)
-                        NameSelect1[name_list.index(selected)].set(0)
-                    non_repeat_name.remove(selected)
+                        record_name_unrepeatable[name_list.index(selected)].set(0)
+                    unrepeatable_names.remove(selected)
                     activated_f = False
-                if not non_repeat_name:
+                if not unrepeatable_names:
                     random.seed(time.time())
-                    non_repeat_name = copy.deepcopy(name)
+                    unrepeatable_names = copy.deepcopy(repeatable_name)
             if not activated_f:
-                frequency[name.index(selected)] += 1
+                frequency[repeatable_name.index(selected)] += 1
                 # print(frequency)
                 total = 0
                 average = (sum(frequency) / len(frequency)) + 1
@@ -146,31 +158,45 @@ def flash_name() -> None:
                         weight[w] = (1 / (f + 1)) / total
                 # print(weight)
                 weight_name1 = []
-                for i in non_repeat_name:
-                    weight_name1.append(weight[name.index(i)])
+                for i in unrepeatable_names:
+                    weight_name1.append(weight[repeatable_name.index(i)])
                 # print(weight_name1)
                 activated_f = True
 
-        none_repeat_text.set('不重复({}/{})'.format(len(non_repeat_name), len(name)))
+        none_repeat_text.set('不重复({}/{})'.format(len(unrepeatable_names), len(repeatable_name)))
         # print(len(name1), len(name))
         time.sleep(0.01)
 
 
-def setting_window():
-    global is_setting_window_init, root1
+def customize_windows() -> None:
+    """
+    启动自定义窗口
+    """
+    global is_customize_window_init, customize_window
 
-    if not is_setting_window_init:
-        is_setting_window_init = True
-        setting_window_init()
+    if not is_customize_window_init:
+        is_customize_window_init = True
+        customize_window_init()
     else:
-        if isinstance(root1, tk.Toplevel):
-            root1.deiconify()
+        if isinstance(customize_window, tk.Toplevel):
+            customize_window.deiconify()
+    return None
 
 
-def setting_window_on_closing():
-    global root1
-    if isinstance(root1, tk.Toplevel):
-        root1.withdraw()
+def setting_window_on_closing() -> None:
+    """
+    关闭自定义窗口，实际上是隐藏
+    """
+    global customize_window
+    if isinstance(customize_window, tk.Toplevel):
+        customize_window.withdraw()
+    return None
+
+
+def calculate_data() -> list:
+    global frequency, weight, Feedback_intensity
+    average = (sum(frequency))
+    return []
 
 
 def show_data():
@@ -227,108 +253,118 @@ def show_data():
     chart_exist = False
 
 
-def setting_window_init():
-    global root1, NameSelect, name, SelectGroup, enable_weight, NameSelect1, SelectGroup1, chart_exist
+def show_data_in_customize():
+    """
+    展示统计数据
+    """
+    global chart_exist
+    if not chart_exist:
+        data = threading.Thread(target=show_data)
+        data.daemon = True
+        data.start()
+        chart_exist = True
 
-    def inner_show_data():
-        global chart_exist
-        if not chart_exist:
-            data = threading.Thread(target=show_data)
-            data.setDaemon(True)
-            data.start()
-            chart_exist = True
 
-    # https://www.cnblogs.com/zwnsyw/p/17426304.html
-    root1 = tk.Toplevel(root, width=800, height=600)
-    root1.resizable(height=False, width=False)
-    root1.attributes('-topmost', True)
-    root1.protocol("WM_DELETE_WINDOW", setting_window_on_closing)
-    root1.iconbitmap('favicon.ico')
+def customize_window_init() -> None:
+    """
+    初始化自定义窗口
+    """
+    global customize_window, record_name_repeatable, repeatable_name, set_name_repeatable, enable_weight, record_name_unrepeatable, set_name_unrepeatable, chart_exist
 
-    if handle["control"] == 0:
-        return
+    # 初始化自定义窗口
+    customize_window = tk.Toplevel(root, width=800, height=600)
+    customize_window.resizable(height=False, width=False)
+    customize_window.attributes('-topmost', True)
+    customize_window.protocol("WM_DELETE_WINDOW", setting_window_on_closing)
+    customize_window.iconbitmap('favicon.ico')
 
-    handle["control"] = 0
-
-    SelectGroup = []
-    SelectGroup1 = []
+    set_name_repeatable = []
+    set_name_unrepeatable = []
     length = len(name_list)
 
-    name_group = tk.LabelFrame(root1, text='可重复组')
-    name_group.grid(row=0, column=0, columnspan=3)
+    # 自定义可重复组
+    repeatable_name_group = tk.LabelFrame(customize_window, text='可重复组')
+    repeatable_name_group.grid(row=0, column=0, columnspan=3)
 
     for i in range(length):
         t = tk.IntVar()
         t.set(1)
-        NameSelect.append(t)
-        but = tk.Checkbutton(name_group, text=name_list[i], variable=NameSelect[i], command=cb4)
+        record_name_repeatable.append(t)
+        but = tk.Checkbutton(repeatable_name_group, text=name_list[i], variable=record_name_repeatable[i], command=cb4)
         but.grid(row=i // 3, column=i % 3)
-        SelectGroup.append(but)
+        set_name_repeatable.append(but)
 
-    name1_group = tk.LabelFrame(root1, text='不重复组')
-    name1_group.grid(row=0, column=4, columnspan=3)
+    unrepeatable_group_lf = tk.LabelFrame(customize_window, text='不重复组')
+    unrepeatable_group_lf.grid(row=0, column=4, columnspan=3)
 
     for i in range(length):
         t = tk.IntVar()
-        if name_list[i] in non_repeat_name:
+        if name_list[i] in unrepeatable_names:
             t.set(1)
         else:
             t.set(0)
-        NameSelect1.append(t)
-        but = tk.Checkbutton(name1_group, text=name_list[i], variable=NameSelect1[i], command=cb5)
+        record_name_unrepeatable.append(t)
+        but = tk.Checkbutton(unrepeatable_group_lf, text=name_list[i], variable=record_name_unrepeatable[i],
+                             command=cb5)
         but.grid(row=i // 3, column=i % 3)
-        SelectGroup1.append(but)
+        set_name_unrepeatable.append(but)
 
-    ret = tk.Button(root1, text="确认", command=setting_window_on_closing)
-    ret.grid(row=length // 3 + 2, column=6)
+    # 确认按钮
+    return_to_root_button = tk.Button(customize_window, text="确认", command=setting_window_on_closing)
+    return_to_root_button.grid(row=length // 3 + 2, column=6)
 
-    show_chat = tk.Button(root1, text="展示统计数据", command=lambda: inner_show_data())
-    show_chat.grid(row=length // 3 + 1, column=0)
+    # 展示统计数据按钮
+    show_chat_button = tk.Button(customize_window, text="展示统计数据", command=show_data_in_customize)
+    show_chat_button.grid(row=length // 3 + 1, column=0)
 
-    reset_b = tk.Button(root1, text="恢复默认设置", command=config_file_error)
-    reset_b.grid(row=length // 3 + 1, column=1)
+    # 恢复默认设置按钮
+    reset_button = tk.Button(customize_window, text="恢复默认设置", command=config_file_error)
+    reset_button.grid(row=length // 3 + 1, column=1)
 
-    mode = tk.Checkbutton(root1, text='自适应权重随机模式', variable=enable_weight)
-    mode.grid(row=length // 3 + 1, column=4)
+    adaptive_weight_mode = tk.Checkbutton(customize_window, text='自适应权重随机模式', variable=enable_weight)
+    adaptive_weight_mode.grid(row=length // 3 + 1, column=4)
 
-    root1.mainloop()
+    customize_window.mainloop()
 
 
 def cb5():
-    global NameSelect1, name_list, non_repeat_name, weight_name1, weight
-    for i in range(len(NameSelect)):
-        if NameSelect1[i].get() == 1:
-            if not (name_list[i] in non_repeat_name):
-                non_repeat_name.append(name_list[i])
-        if NameSelect1[i].get() == 0:
-            if name_list[i] in non_repeat_name:
-                non_repeat_name.remove(name_list[i])
+    global record_name_unrepeatable, name_list, unrepeatable_names, weight_name1, weight
+    for i in range(len(record_name_repeatable)):
+        if record_name_unrepeatable[i].get() == 1:
+            if not (name_list[i] in unrepeatable_names):
+                unrepeatable_names.append(name_list[i])
+        if record_name_unrepeatable[i].get() == 0:
+            if name_list[i] in unrepeatable_names:
+                unrepeatable_names.remove(name_list[i])
     weight_name1 = []
-    for i in non_repeat_name:
+    for i in unrepeatable_names:
         weight_name1.append(weight[name_list.index(i)])
 
 
 def cb4():
-    global NameSelect, name_list, name
-    for i in range(len(NameSelect)):
-        if NameSelect[i].get() == 1:
-            if not (name_list[i] in name):
-                name.append(name_list[i])
-        if NameSelect[i].get() == 0:
-            if name_list[i] in name:
-                name.remove(name_list[i])
+    global record_name_repeatable, name_list, repeatable_name
+    for i in range(len(record_name_repeatable)):
+        if record_name_repeatable[i].get() == 1:
+            if not (name_list[i] in repeatable_name):
+                repeatable_name.append(name_list[i])
+        if record_name_repeatable[i].get() == 0:
+            if name_list[i] in repeatable_name:
+                repeatable_name.remove(name_list[i])
 
 
-def config_file_error():
+def config_file_error() -> None:
+    """
+    删除配置文件
+    """
     os.remove('record.dat')
     sys.exit()
 
 
-def on_root_closing():
-    global root, root1, frequency, init_time
+def on_root_closing() -> None:
+    global root, customize_window, frequency, init_time
     root.destroy()
     with open('record.dat', 'w', encoding='utf-8') as f:
-        for i in non_repeat_name:
+        for i in unrepeatable_names:
             f.write(i + ';')
         f.write('\n')
         for i in frequency:
@@ -348,11 +384,13 @@ def main() -> None:
     """
     初始化随机点名
     """
-    global root, shown_name, name, selected, none_repeat, none_repeat_text, root1, NameSelect, non_repeat_name, non_repeat_check_box, frequency, init_time
+    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pauseOrContinue
 
     # 定义样式
     style = tbs.style.Style(theme='minty')
     top6 = style.master
+
+    # matplotlib.use('agg')
 
     # 根窗口
     root.title('随机点名')
@@ -392,7 +430,7 @@ def main() -> None:
     with open('record.dat', 'r', encoding='utf-8') as f:
         try:
             read = f.read()
-            non_repeat_name = str(read.split('\n')[0]).split(';')[:-1]
+            unrepeatable_names = str(read.split('\n')[0]).split(';')[:-1]
             # print(len(name1))
             temp: list = str(read.split('\n')[1]).split(';')[:-1]
             for i in range(len(frequency)):
@@ -425,27 +463,27 @@ def main() -> None:
     name_label.pack(expand=True)
 
     # 暂停/继续滚动按钮
-    button = tk.Button(root, text="暂停/继续", command=cb1)
+    button = tk.Button(root, text="暂停/继续", command=inv_poc)
     button.pack(expand=True)
 
     # 置0
     none_repeat = tk.IntVar()
-    # 复选框文本
-    none_repeat_text = tk.StringVar(value=f'不重复({len(non_repeat_name)}/{len(name)})')
+    none_repeat_text = tk.StringVar(value=f'不重复({len(unrepeatable_names)}/{len(name_list)})')
 
     # 自定义按钮
-    customize_button = tk.Button(root, text="自定义", command=setting_window)
+    customize_button = tk.Button(root, text="自定义", command=customize_windows)
     customize_button.pack(side=tk.LEFT)
 
+    # 不重复复选框
     non_repeat_check_box = tk.Checkbutton(root, textvariable=none_repeat_text, variable=none_repeat)
     none_repeat.set(1)
     non_repeat_check_box.pack(expand=True, side=tk.LEFT)
 
-    reset_button = tk.Button(root, text="重置", command=cb2)
+    reset_button = tk.Button(root, text="重置", command=reset_none_repeat)
     reset_button.pack(side=tk.LEFT)
 
     flash_name_thread = threading.Thread(target=flash_name)
-    flash_name_thread.setDaemon(True)
+    flash_name_thread.daemon = True  # 守护模式
     flash_name_thread.start()
     # print(NameSelect[0].get())
     root.mainloop()
