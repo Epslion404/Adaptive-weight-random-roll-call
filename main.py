@@ -24,6 +24,7 @@ name_list: list = str('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z').spl
 # 数据记录的起始时间
 init_time = ''
 
+# 可重复组名单
 repeatable_name: list = copy.deepcopy(name_list)
 
 # 不重复组名单
@@ -35,7 +36,8 @@ frequency: list = [0 for i in range(len(name_list))]
 # 总权重
 weight: list = [1.0 for j in range(len(name_list))]
 
-activated_f = False
+# 跳过计算
+skip_calculate = False
 
 # 根窗口
 root = tk.Tk()
@@ -43,6 +45,7 @@ root = tk.Tk()
 # 自定义窗口
 customize_window = None
 
+# 数据是否已经显示
 chart_exist = False
 
 # 根窗口展示的名字
@@ -65,20 +68,26 @@ non_repeat_check_box = None
 # "不重复模式"复选框文本
 none_repeat_text = tk.StringVar(value=f'不重复({len(unrepeatable_names)}/{len(name_list)})')
 
+# 记录可重复组名单启用情况
 record_name_repeatable = []
 
+# 记录不可重复组名单启用情况
 record_name_unrepeatable = []
 
+# 可重复组名单复选框
 set_name_repeatable = []
 
+# 不可重复组名单复选框
 set_name_unrepeatable = []
 
 # 标志：自定义窗口是否初始化
 is_customize_window_init = False
 
-weight_name1 = []
+# 不可重复组权重
+unrepeatable_weight = []
 
-Feedback_intensity = 2  # 负反馈力度
+# 负反馈力度
+Feedback_intensity = 2
 
 
 def inv_poc() -> None:
@@ -94,50 +103,55 @@ def reset_none_repeat() -> None:
     """
     重置不重复组名单
     """
-    global unrepeatable_names, weight_name1, record_name_unrepeatable, pauseOrContinue
+    global unrepeatable_names, unrepeatable_weight, record_name_unrepeatable, pauseOrContinue
     if not pauseOrContinue:
         return None
     else:
         unrepeatable_names = copy.deepcopy(repeatable_name)
-        weight_name1 = copy.deepcopy(weight)
+        unrepeatable_weight = copy.deepcopy(weight)
         for i in record_name_unrepeatable:
             i.set(1)
     return None
 
 
 def flash_name() -> None:
-    global pauseOrContinue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, activated_f, weight, weight_name1, enable_weight, Feedback_intensity, Exit
+    global pauseOrContinue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, Feedback_intensity, Exit
+
+    # 同步权重
     for i in unrepeatable_names:
-        weight_name1.append(weight[repeatable_name.index(i)])
+        unrepeatable_weight.append(weight[repeatable_name.index(i)])
 
     while True:
         if pauseOrContinue:
+            # 如果是重复模式
             if none_repeat.get() == 0:
+                # 如果使用动态权重调整模式
                 if enable_weight.get() == 1:
                     selected = random.choices(repeatable_name, weights=weight, k=1)[0]
                 else:
                     selected = random.choice(repeatable_name)
                 shown_name.set(selected)
-            else:
+            else:  # 如果是不重复模式
                 if enable_weight.get() == 1:
-                    selected = random.choices(unrepeatable_names, weights=weight_name1, k=1)[0]
+                    selected = random.choices(unrepeatable_names, weights=unrepeatable_weight, k=1)[0]
                 else:
                     selected = random.choice(unrepeatable_names)
                 shown_name.set(selected)
-            if activated_f:
-                activated_f = False
+            if skip_calculate:
+                skip_calculate = False
         else:
+            # 如果是不重复模式
             if none_repeat.get() == 1:
                 if selected in unrepeatable_names:
                     if record_name_unrepeatable != []:
                         # print(NameSelect1)
                         record_name_unrepeatable[name_list.index(selected)].set(0)
                     unrepeatable_names.remove(selected)
-                    activated_f = False
+                    skip_calculate = False
                 if not unrepeatable_names:
                     random.seed(time.time())
                     unrepeatable_names = copy.deepcopy(repeatable_name)
-            if not activated_f:
+            if not skip_calculate:
                 frequency[repeatable_name.index(selected)] += 1
                 # print(frequency)
                 total = 0
@@ -157,11 +171,11 @@ def flash_name() -> None:
                     else:
                         weight[w] = (1 / (f + 1)) / total
                 # print(weight)
-                weight_name1 = []
+                unrepeatable_weight = []
                 for i in unrepeatable_names:
-                    weight_name1.append(weight[repeatable_name.index(i)])
+                    unrepeatable_weight.append(weight[repeatable_name.index(i)])
                 # print(weight_name1)
-                activated_f = True
+                skip_calculate = True
 
         none_repeat_text.set('不重复({}/{})'.format(len(unrepeatable_names), len(repeatable_name)))
         # print(len(name1), len(name))
@@ -199,7 +213,10 @@ def calculate_data() -> list:
     return []
 
 
-def show_data():
+def show_data() -> None:
+    """
+    展示统计数据
+    """
     global chart_exist, init_time, frequency, weight, Feedback_intensity
     total = 0
     average = (sum(frequency) / len(frequency)) + 1
@@ -290,7 +307,8 @@ def customize_window_init() -> None:
         t = tk.IntVar()
         t.set(1)
         record_name_repeatable.append(t)
-        but = tk.Checkbutton(repeatable_name_group, text=name_list[i], variable=record_name_repeatable[i], command=cb4)
+        but = tk.Checkbutton(repeatable_name_group, text=name_list[i], variable=record_name_repeatable[i],
+                             command=repeatable_name_group_update)
         but.grid(row=i // 3, column=i % 3)
         set_name_repeatable.append(but)
 
@@ -305,7 +323,7 @@ def customize_window_init() -> None:
             t.set(0)
         record_name_unrepeatable.append(t)
         but = tk.Checkbutton(unrepeatable_group_lf, text=name_list[i], variable=record_name_unrepeatable[i],
-                             command=cb5)
+                             command=unrepeatable_name_group_update)
         but.grid(row=i // 3, column=i % 3)
         set_name_unrepeatable.append(but)
 
@@ -327,8 +345,8 @@ def customize_window_init() -> None:
     customize_window.mainloop()
 
 
-def cb5():
-    global record_name_unrepeatable, name_list, unrepeatable_names, weight_name1, weight
+def unrepeatable_name_group_update():
+    global record_name_unrepeatable, name_list, unrepeatable_names, unrepeatable_weight, weight
     for i in range(len(record_name_repeatable)):
         if record_name_unrepeatable[i].get() == 1:
             if not (name_list[i] in unrepeatable_names):
@@ -336,12 +354,12 @@ def cb5():
         if record_name_unrepeatable[i].get() == 0:
             if name_list[i] in unrepeatable_names:
                 unrepeatable_names.remove(name_list[i])
-    weight_name1 = []
+    unrepeatable_weight = []
     for i in unrepeatable_names:
-        weight_name1.append(weight[name_list.index(i)])
+        unrepeatable_weight.append(weight[name_list.index(i)])
 
 
-def cb4():
+def repeatable_name_group_update():
     global record_name_repeatable, name_list, repeatable_name
     for i in range(len(record_name_repeatable)):
         if record_name_repeatable[i].get() == 1:
@@ -363,13 +381,10 @@ def config_file_error() -> None:
 def on_root_closing() -> None:
     global root, customize_window, frequency, init_time
     root.destroy()
+    data = {"non_repeat_name": unrepeatable_names, "frequency": frequency,
+            "init_time": init_time}
     with open('record.dat', 'w', encoding='utf-8') as f:
-        for i in unrepeatable_names:
-            f.write(i + ';')
-        f.write('\n')
-        for i in frequency:
-            f.write(str(i) + ';')
-        f.write('\n' + init_time)
+        json.dump(data, f)
     sys.exit()
 
 
@@ -411,35 +426,25 @@ def main() -> None:
     label1.pack(expand=True)
 
     # 检测配置文件是否存在
-    # if not os.path.exists('record.dat'):
-    #     with open('record.dat', 'w', encoding='utf-8') as f:
-    #         for i in name_list:
-    #             f.write(i + ';')
-    #         f.write('\n')
-    #         for i in frequency:
-    #             f.write(str(i) + ';')
-    #         f.write('\n' + time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
     if not os.path.exists('record.dat'):
         data = {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))],
-                "init_time": time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())}
-        json_string = json.dumps(data)
+                "init_time": time.strftime("%Y年%b%d日 %a %H:%M:%S", time.localtime())}
         with open('record.dat', 'w', encoding='utf-8') as f:
-            f.write(json_string)
+            json.dump(data, f)
 
     # 读取配置文件
     with open('record.dat', 'r', encoding='utf-8') as f:
         try:
-            read = f.read()
-            unrepeatable_names = str(read.split('\n')[0]).split(';')[:-1]
-            # print(len(name1))
-            temp: list = str(read.split('\n')[1]).split(';')[:-1]
-            for i in range(len(frequency)):
-                frequency[i] = int(temp[i])
-            init_time = read.split('\n')[2]
-        except:
+            read = json.load(f)
+
+            unrepeatable_names = read['non_repeat_name']
+            frequency = read['frequency']
+            init_time = read['init_time']
+        except json.decoder.JSONDecodeError:
             f.close()
             config_file_error()
 
+    print(init_time)
     # 指定默认字体
     mpl.rcParams['font.sans-serif'] = ['FangSong']
     mpl.rcParams['font.size'] = 10
