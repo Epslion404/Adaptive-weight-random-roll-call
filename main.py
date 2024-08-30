@@ -12,7 +12,7 @@ import tkinter as tk
 import numpy as np
 import webbrowser
 import threading
-import inspect
+# import inspect
 import random
 import copy
 import time
@@ -22,16 +22,16 @@ import os
 
 # 所有名字
 # name_list: list = str('将这个字符串替换为所有的名字，名字之间使用分隔符分隔').split('将这个字符串替换为名字之间的分隔符')
-name_list: list = str('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z').split(' ')
+name_list = []
 
 # 数据记录的起始时间
 init_time = ''
 
 # 可重复组名单
-repeatable_name: list = copy.deepcopy(name_list)
+repeatable_name = []
 
 # 不重复组名单
-unrepeatable_names: list = copy.deepcopy(name_list)
+unrepeatable_names = []
 
 # 总频率
 frequency: list = [0 for i in range(len(name_list))]
@@ -52,7 +52,7 @@ customize_window = None
 chart_exist = False
 
 # 根窗口展示的名字
-shown_name = tk.StringVar(value=random.choice(repeatable_name))
+shown_name = tk.StringVar()
 
 # 标志：是否开始滚动
 pauseOrContinue = True
@@ -130,6 +130,8 @@ def flash_name() -> None:
     for i in unrepeatable_names:
         unrepeatable_weight.append(weight[repeatable_name.index(i)])
 
+    calculate_weight()
+
     while True:
         if pauseOrContinue:
             # 如果是重复模式
@@ -163,27 +165,7 @@ def flash_name() -> None:
             if not skip_calculate:
                 frequency[repeatable_name.index(selected)] += 1
                 # print(frequency)
-                total = 0
-                average = (sum(frequency) / len(frequency)) + 1
-                for i in frequency:
-                    if i + 1 > average:
-                        total += (1 / Feedback_intensity) / (i + 1)
-                    elif i + 1 < average:
-                        total += Feedback_intensity / (i + 1)
-                    else:
-                        total += 1 / (i + 1)
-                for w, f in zip(range(len(weight)), frequency):
-                    if f + 1 > average:
-                        weight[w] = ((1 / Feedback_intensity) / (f + 1)) / total
-                    elif f + 1 < average:
-                        weight[w] = (Feedback_intensity / (f + 1)) / total
-                    else:
-                        weight[w] = (1 / (f + 1)) / total
-                # print(weight)
-                unrepeatable_weight = []
-                for i in unrepeatable_names:
-                    unrepeatable_weight.append(weight[repeatable_name.index(i)])
-                # print(weight_name1)
+                calculate_weight()
                 skip_calculate = True
 
         none_repeat_text.set('不重复({}/{})'.format(len(unrepeatable_names), len(repeatable_name)))
@@ -216,10 +198,32 @@ def setting_window_on_closing() -> None:
     return None
 
 
-def calculate_data() -> list:
-    global frequency, weight, Feedback_intensity
-    average = (sum(frequency))
-    return []
+def calculate_weight() -> None:
+    """
+    计算权重
+    """
+    global frequency, weight, Feedback_intensity, unrepeatable_weight, unrepeatable_names
+    total = 0
+    average = (sum(frequency) / len(frequency)) + 1
+    for i in frequency:
+        if i + 1 > average:
+            total += (1 / Feedback_intensity) / (i + 1)
+        elif i + 1 < average:
+            total += Feedback_intensity / (i + 1)
+        else:
+            total += 1 / (i + 1)
+    for w, f in zip(range(len(weight)), frequency):
+        if f + 1 > average:
+            weight[w] = ((1 / Feedback_intensity) / (f + 1)) / total
+        elif f + 1 < average:
+            weight[w] = (Feedback_intensity / (f + 1)) / total
+        else:
+            weight[w] = (1 / (f + 1)) / total
+    # print(weight)
+    unrepeatable_weight = []
+    for i in unrepeatable_names:
+        unrepeatable_weight.append(weight[repeatable_name.index(i)])
+    return None
 
 
 def show_data() -> None:
@@ -355,7 +359,7 @@ def customize_window_init() -> None:
     show_chat_button.grid(row=length // 3 + 1, column=0)
 
     # 恢复默认设置按钮
-    reset_button = tk.Button(customize_window, text="恢复默认设置", command=config_file_error)
+    reset_button = tk.Button(customize_window, text="恢复默认设置", command=reset_config_file)
     reset_button.grid(row=length // 3 + 1, column=2)
 
     adaptive_weight_mode = tk.Checkbutton(customize_window, text='自适应权重随机模式', variable=enable_weight)
@@ -389,18 +393,33 @@ def repeatable_name_group_update():
                 repeatable_name.remove(name_list[i])
 
 
-def config_file_error() -> None:
+def reset_config_file() -> None:
     """
-    删除配置文件
+    重置配置文件
     """
-    caller_frame = inspect.stack()[1]
-    caller_file = caller_frame[1]
-    caller_line = caller_frame[2]
-    caller_function = caller_frame[3]
-    print("Caller file:", caller_file)
-    print("Caller line:", caller_line)
-    print("Caller function:", caller_function)
+    # caller_frame = inspect.stack()[1]
+    # caller_file = caller_frame[1]
+    # caller_line = caller_frame[2]
+    # caller_function = caller_frame[3]
+    # print("Caller file:", caller_file)
+    # print("Caller line:", caller_line)
+    # print("Caller function:", caller_function)
     os.remove('record.dat')
+    data = {"name_list": name_list,
+            "语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "英语": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "物理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "化学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "生物": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "历史": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "政治": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "init_time": time.strftime("%Y年%b%d日 %a %H:%M:%S", time.localtime())}
+    with open('record.dat', 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+        f.close()
     sys.exit()
 
 
@@ -421,7 +440,7 @@ def main() -> None:
     """
     初始化随机点名
     """
-    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pauseOrContinue, DATA, Subject
+    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pauseOrContinue, DATA, Subject, name_list, repeatable_name, unrepeatable_names, shown_name, none_repeat_text, weight
 
     def class_select_cb(index: int):
         global Subject, DATA, unrepeatable_names, frequency
@@ -433,7 +452,7 @@ def main() -> None:
             select_window.destroy()
         except Exception as ex:
             print(f'Error raised: {ex}')
-            config_file_error()
+            reset_config_file()
         # 设置根窗口
         root.geometry("240x120+0+0")
         root.resizable(height=False, width=False)
@@ -472,20 +491,8 @@ def main() -> None:
 
     # 检测配置文件是否存在
     if not os.path.exists('record.dat'):
-        DATA = {"语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "英语": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "物理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "化学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "生物": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "历史": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "政治": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-                "init_time": time.strftime("%Y年%b%d日 %a %H:%M:%S", time.localtime())}
-        with open('record.dat', 'w', encoding='utf-8') as f:
-            json.dump(DATA, f)
-            f.close()
+        tkinter.messagebox.showerror("错误", "没有找到配置文件")
+        sys.exit()
 
     # 读取配置文件
     with open('record.dat', 'r', encoding='utf-8') as f:
@@ -495,11 +502,17 @@ def main() -> None:
             # for i in subjects:
             #     if len(DATA[i]) != 2:
             #         raise RuntimeError("Config file error")
+            name_list = DATA["name_list"]
             init_time = DATA['init_time']
+            repeatable_name = copy.deepcopy(name_list)
+            unrepeatable_names = copy.deepcopy(name_list)
+            shown_name = tk.StringVar(value=random.choice(repeatable_name))
+            none_repeat_text = tk.StringVar(value=f'不重复({len(unrepeatable_names)}/{len(name_list)})')
+            weight = [1.0 for j in range(len(name_list))]
         except Exception as ex:
-            print(f'Error raised: {ex}')
+            tkinter.messagebox.showerror("错误", f'Error raised: {ex}')
             f.close()
-            config_file_error()
+            sys.exit()
 
     # 指定默认字体
     mpl.rcParams['font.sans-serif'] = ['FangSong']
