@@ -1,12 +1,13 @@
 # 自适应权重随机点名
 
+[github](https://github.com/Epslion404/Adaptive-weight-random-roll-call)
+
 #### 介绍
 短期内更加公平的随机点名系统  
 **使用了Minecraft的幸运方块MOD作为图标，如果不能使用，请立即告诉我**
 
 #### 软件架构
 使用python 3.8开发。
-
 
 #### 安装教程
 
