@@ -11,11 +11,10 @@
 #### 安装教程
 
 1.  安装python 3.8
-2.  下载`main.py` `favicon.ico`文件
-3.  安装库`tkinter` `msvc-runtime` `matplotlib` `ttkbootstrap` `pyinstaller`
+3.  运行文件 `install modules.bat` 来安装库
 4.  按照main.py文件内的指示填写名单和分隔符
 5.  运行main.py文件，检验程序是否可以运行
-6.  运行命令 `pyinstaller -F -w -i favicon.ico main.py` 以打包成可执行文件
+6.  运行命令 `pyinstaller -F -w -i favicon.ico main.py` 或运行文件 `pack to exe.bat` 以打包成可执行文件
 
 #### 使用说明
 
