@@ -12,7 +12,6 @@ import tkinter as tk
 import numpy as np
 import webbrowser
 import threading
-# import inspect
 import random
 import copy
 import time
@@ -445,13 +444,13 @@ def main() -> None:
     def class_select_cb(index: int):
         global Subject, DATA, unrepeatable_names, frequency
         try:
-            subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
-            Subject = subjects[index]
+            s = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
+            Subject = s[index]
             unrepeatable_names = DATA[Subject]['non_repeat_name']
             frequency = DATA[Subject]['frequency']
             select_window.destroy()
-        except Exception as ex:
-            print(f'Error raised: {ex}')
+        except Exception as e:
+            print(f'Error raised: {e}')
             reset_config_file()
         # 设置根窗口
         root.geometry("240x120+0+0")

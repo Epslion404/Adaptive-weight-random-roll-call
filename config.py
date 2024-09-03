@@ -16,6 +16,8 @@ def main() -> None:
             showerror("错误", "不能留空")
             return None
         name_list = entry1.get().split(entry2.get())
+        if not ('当堂老师' in name_list):
+            name_list.append('当堂老师')
         data = {"name_list": name_list,
                 "语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
                 "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
@@ -28,6 +30,10 @@ def main() -> None:
                 "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
                 "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
                 "init_time": time.strftime("%Y年%b%d日 %a %H:%M:%S", time.localtime())}
+        before_encrypt = json.dumps(data)
+        key = base64.b64decode('ryGGCqRLpR9nEOS+LL5Duw==')
+        cipher = AES.new(key, AES.MODE_EAX)
+        # encrypted, tag =
         with open('record.dat', 'w', encoding='utf-8') as f:
             json.dump(data, f)
             f.close()
