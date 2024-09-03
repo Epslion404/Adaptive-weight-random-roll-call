@@ -12,6 +12,7 @@ import tkinter as tk
 import numpy as np
 import webbrowser
 import threading
+import ctypes
 import random
 import copy
 import time
@@ -54,7 +55,7 @@ chart_exist = False
 shown_name = tk.StringVar()
 
 # 标志：是否开始滚动
-pauseOrContinue = True
+pause_or_continue = True
 
 selected = None
 
@@ -102,8 +103,8 @@ def inv_poc() -> None:
     """
     反转pauseOrContinue
     """
-    global pauseOrContinue
-    pauseOrContinue = not pauseOrContinue
+    global pause_or_continue
+    pause_or_continue = not pause_or_continue
     return None
 
 
@@ -111,8 +112,8 @@ def reset_none_repeat() -> None:
     """
     重置不重复组名单
     """
-    global unrepeatable_names, unrepeatable_weight, record_name_unrepeatable, pauseOrContinue
-    if not pauseOrContinue:
+    global unrepeatable_names, unrepeatable_weight, record_name_unrepeatable, pause_or_continue
+    if not pause_or_continue:
         tkinter.messagebox.showerror("Error", "不能在暂停滚动时重置名单")
     else:
         unrepeatable_names = copy.deepcopy(repeatable_name)
@@ -123,7 +124,7 @@ def reset_none_repeat() -> None:
 
 
 def flash_name() -> None:
-    global pauseOrContinue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, Feedback_intensity
+    global pause_or_continue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, Feedback_intensity
 
     # 同步权重
     for i in unrepeatable_names:
@@ -132,7 +133,7 @@ def flash_name() -> None:
     calculate_weight()
 
     while True:
-        if pauseOrContinue:
+        if pause_or_continue:
             # 如果是重复模式
             if none_repeat.get() == 0:
                 # 如果使用动态权重调整模式
@@ -347,19 +348,19 @@ def customize_window_init() -> None:
     about_label = tk.Button(customize_window, text="对本软件使用、转载、修改等请遵守开源协议")
     about_label.grid(row=length // 3 + 3, columnspan=4)
 
-    gitee_link_label = tk.Button(customize_window, text="gitee", fg="blue", cursor="hand2", command=lambda: webbrowser.open_new("https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call/blob/master/LICENSE"))
+    gitee_link_label = tk.Button(customize_window, text="gitee", fg="blue", cursor="hand2",
+                                 command=lambda: webbrowser.open_new(
+                                     "https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call/blob/master/LICENSE"))
     gitee_link_label.grid(row=length // 3 + 3, column=4)
 
-    github_link_label = tk.Button(customize_window, text="github", fg="blue", cursor="hand2",command=lambda: webbrowser.open_new("https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call/blob/master/LICENSE"))
+    github_link_label = tk.Button(customize_window, text="github", fg="blue", cursor="hand2",
+                                  command=lambda: webbrowser.open_new(
+                                      "https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call/blob/master/LICENSE"))
     github_link_label.grid(row=length // 3 + 3, column=5)
 
     # 展示统计数据按钮
     show_chat_button = tk.Button(customize_window, text="展示统计数据", command=show_data_in_customize)
     show_chat_button.grid(row=length // 3 + 1, column=0)
-
-    # 恢复默认设置按钮
-    reset_button = tk.Button(customize_window, text="恢复默认设置", command=reset_config_file)
-    reset_button.grid(row=length // 3 + 1, column=2)
 
     adaptive_weight_mode = tk.Checkbutton(customize_window, text='自适应权重随机模式', variable=enable_weight)
     adaptive_weight_mode.grid(row=length // 3 + 1, column=4)
@@ -392,35 +393,6 @@ def repeatable_name_group_update():
                 repeatable_name.remove(name_list[i])
 
 
-def reset_config_file() -> None:
-    """
-    重置配置文件
-    """
-    # caller_frame = inspect.stack()[1]
-    # caller_file = caller_frame[1]
-    # caller_line = caller_frame[2]
-    # caller_function = caller_frame[3]
-    # print("Caller file:", caller_file)
-    # print("Caller line:", caller_line)
-    # print("Caller function:", caller_function)
-    os.remove('record.dat')
-    data = {"name_list": name_list,
-            "语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "英语": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "物理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "化学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "生物": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "历史": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "政治": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "init_time": time.strftime("%Y年%b%d日 %a %H:%M:%S", time.localtime())}
-    with open('record.dat', 'w', encoding='utf-8') as f:
-        json.dump(data, f)
-        f.close()
-    sys.exit()
-
 
 def on_root_closing() -> None:
     global root, customize_window, frequency, init_time, DATA
@@ -432,6 +404,15 @@ def on_root_closing() -> None:
     with open('record.dat', 'w', encoding='utf-8') as f:
         json.dump(DATA, f)
         f.close()
+    exit_exe()
+
+
+def exit_exe() -> None:
+    """
+    退出程序
+    """
+    if os.path.exists("running.dat"):
+        os.remove("running.dat")
     sys.exit()
 
 
@@ -439,7 +420,15 @@ def main() -> None:
     """
     初始化随机点名
     """
-    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pauseOrContinue, DATA, Subject, name_list, repeatable_name, unrepeatable_names, shown_name, none_repeat_text, weight
+    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pause_or_continue, DATA, Subject, name_list, repeatable_name, unrepeatable_names, shown_name, none_repeat_text, weight
+
+    if os.path.exists('running.dat'):
+        tkinter.messagebox.showinfo("提示", "随机点名已经在运行了")
+        exit_exe()
+    else:
+        with open("running.dat", 'w') as f:
+            f.write('?')
+        ctypes.windll.kernel32.SetFileAttributesW('running.dat', 0x02)
 
     def class_select_cb(index: int):
         global Subject, DATA, unrepeatable_names, frequency
@@ -451,7 +440,7 @@ def main() -> None:
             select_window.destroy()
         except Exception as e:
             print(f'Error raised: {e}')
-            reset_config_file()
+            exit_exe()
         # 设置根窗口
         root.geometry("240x120+0+0")
         root.resizable(height=False, width=False)
@@ -491,7 +480,7 @@ def main() -> None:
     # 检测配置文件是否存在
     if not os.path.exists('record.dat'):
         tkinter.messagebox.showerror("错误", "没有找到配置文件")
-        sys.exit()
+        exit_exe()
 
     # 读取配置文件
     with open('record.dat', 'r', encoding='utf-8') as f:
@@ -511,7 +500,7 @@ def main() -> None:
         except Exception as ex:
             tkinter.messagebox.showerror("错误", f'Error raised: {ex}')
             f.close()
-            sys.exit()
+            exit_exe()
 
     # 指定默认字体
     mpl.rcParams['font.sans-serif'] = ['FangSong']
