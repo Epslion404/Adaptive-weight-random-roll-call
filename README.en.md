@@ -1,36 +1,24 @@
-# 自适应权重随机点名
+# Adaptive weight random roll call
+
+[github](https://github.com/Epslion404/Adaptive-weight-random-roll-call)
 
 #### Description
-短时间内更加公平的随机点名系统
+A more fair random roll call system in a short period of time.
 
 #### Software Architecture
-Software architecture description
+Developed using Python 3.8 .
 
 #### Installation
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1. Install Python 3.8
+2. Run the file `install modules. bat` to install the library
+3. Fill in the list and separator according to the instructions in the main. py file
+4. Run the `main.py` file to verify if the program can run
+5. Run the command `pyinstaller - F - w - i favicon. ico main. py` or run the file `pack to exe. bat` to package it into an executable file
 
 #### Instructions
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+Directly run the `main. py` file or the packaged file
 
 #### Contribution
 
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
-
-
-#### Gitee Feature
-
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)

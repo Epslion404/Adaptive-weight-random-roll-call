@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*- #
 
-from Crypto.Random import get_random_bytes
+# from Crypto.Random import get_random_bytes
 from tkinter.messagebox import *
 from Crypto.Cipher import AES
 import tkinter as tk
@@ -11,11 +11,16 @@ import sys
 
 
 def main() -> None:
+    # A;B;C;D;E;F;G;H;I;J;K;L;M;N;O;P;Q;R;S;T;U;V;W;X;Y;Z
     def generate() -> None:
         if entry1.get() == '' or entry2.get() == '':
             showerror("错误", "不能留空")
             return None
         name_list = entry1.get().split(entry2.get())
+        if not askyesno("提示", f"检测到{len(name_list)}个名字，是否继续？"):
+            return None
+        if askyesno("提示", "是否加入当堂老师？"):
+            name_list.append("当堂老师")
         data = {"name_list": name_list,
                 "语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
                 "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
