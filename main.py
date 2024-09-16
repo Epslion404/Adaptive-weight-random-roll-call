@@ -5,6 +5,7 @@
 
 import matplotlib.transforms as mtransforms
 import matplotlib.pyplot as plt
+from Crypto.Cipher import AES
 import ttkbootstrap as tbs
 import tkinter.messagebox
 from pylab import mpl
@@ -14,6 +15,7 @@ import webbrowser
 import threading
 import ctypes
 import random
+import base64
 import copy
 import time
 import json
@@ -97,6 +99,56 @@ DATA = {}
 
 # 课堂选择
 Subject = ''
+
+# 密钥
+key = b'\x16a\xca\xa7\xa4\n\xef\xc72{\x85\x88HJ\x1e3'
+
+# 版本号
+VERSION = "1.1.0"
+
+
+def encrypt(plain_text):
+    """
+    加密
+    :param plain_text: 明文
+    :return: 密文
+    """
+    global key
+    # 创建 AES 加密对象
+    cipher = AES.new(key, AES.MODE_EAX)
+
+    # 加密数据并生成认证标签
+    nonce = cipher.nonce
+    cipher_text, tag = cipher.encrypt_and_digest(plain_text.encode())
+
+    # 返回 nonce, tag 和密文
+    return base64.b64encode(nonce + tag + cipher_text).decode()
+
+
+def decrypt(encrypted_text):
+    """
+    解密
+    :param encrypted_text: 密文
+    :return: 加密
+    """
+    # 解码 base64 编码的加密数据
+    encrypted_data = base64.b64decode(encrypted_text)
+
+    # 分割 nonce, tag 和密文
+    nonce = encrypted_data[:16]
+    tag = encrypted_data[16:32]
+    cipher_text = encrypted_data[32:]
+
+    # 创建 AES 解密对象
+    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
+
+    # 解密并验证数据
+    try:
+        plain_text = cipher.decrypt_and_verify(cipher_text, tag)
+        return plain_text.decode()
+    except ValueError:
+        tkinter.messagebox.showerror("错误", "配置文件解析失败，请重新生成")
+        exit_exe()
 
 
 def inv_poc() -> None:
@@ -250,7 +302,7 @@ def show_data() -> None:
 
     y1 = np.array(frequency)
     y2 = np.array(weight)
-    plt.figure('Data', figsize=(17, 7), dpi=100)
+    plt.figure(f'记录始于{init_time}。', figsize=(17, 7), dpi=100)
     rect1 = [0.05, 0.55, 0.92, 0.4]
     rect2 = [0.05, 0.06, 0.92, 0.4]
     ax1 = plt.axes(rect1)
@@ -276,7 +328,7 @@ def show_data() -> None:
     for label in label2:
         offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
         label.set_transform(label.get_transform() + offset)
-    ax2.text(1, 0.05, '纪录始于 ' + init_time, fontsize=10)
+    # ax2.text(1, 0.05, '纪录始于 ' + init_time, fontsize=10)
     plt.show()
     plt.cla()
     plt.close('all')
@@ -393,7 +445,6 @@ def repeatable_name_group_update():
                 repeatable_name.remove(name_list[i])
 
 
-
 def on_root_closing() -> None:
     global root, customize_window, frequency, init_time, DATA
     root.destroy()
@@ -402,7 +453,7 @@ def on_root_closing() -> None:
     # print(Subject, frequency)
     # print(DATA[Subject]['frequency'])
     with open('record.dat', 'w', encoding='utf-8') as f:
-        json.dump(DATA, f)
+        f.write(encrypt(json.dumps(DATA)))
         f.close()
     exit_exe()
 
@@ -485,7 +536,8 @@ def main() -> None:
     # 读取配置文件
     with open('record.dat', 'r', encoding='utf-8') as f:
         try:
-            DATA = json.load(f)
+            DATA = json.loads(decrypt(f.read()))
+            # DATA = json.load(f)
             subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
             # for i in subjects:
             #     if len(DATA[i]) != 2:
@@ -539,7 +591,6 @@ def main() -> None:
     select_window = tk.Tk()
     select_window.geometry("180x120+50+50")
     select_window.resizable(height=False, width=False)
-    select_window.overrideredirect(True)
     select_window.attributes('-topmost', True)
     label1 = tk.Label(select_window, text='选择当堂科目', font=("黑体", 20, "bold"), relief=tk.RIDGE)
     label1.grid(row=0, columnspan=5, pady=5)
@@ -570,4 +621,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if "-version" in sys.argv:
+        sys.exit(VERSION)
     main()
