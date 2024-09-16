@@ -143,3 +143,4 @@ release-exe/
 # config file
 record.dat
 running.dat
+.idea/workspace.xml
