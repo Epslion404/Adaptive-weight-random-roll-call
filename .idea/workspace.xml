@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f607af11-52ab-4632-8f27-08200c8bb330" name="更改" comment="版本更新v1.1.0 95% 未完成权重计算部分">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pack to exe.bat" beforeDir="false" afterPath="$PROJECT_DIR$/pack to exe.bat" afterDir="false" />
-    </list>
+    <list default="true" id="f607af11-52ab-4632-8f27-08200c8bb330" name="更改" comment="版本更新v1.1.0 100%" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -159,7 +153,15 @@
       <option name="project" value="LOCAL" />
       <updated>1726543439195</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="版本更新v1.1.0 100%">
+      <option name="closed" value="true" />
+      <created>1726556302914</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1726556302960</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -182,6 +184,7 @@
     <MESSAGE value="更改了英文README" />
     <MESSAGE value="版本更新v1.1.0 50% 未完成加密部分" />
     <MESSAGE value="版本更新v1.1.0 95% 未完成权重计算部分" />
-    <option name="LAST_COMMIT_MESSAGE" value="版本更新v1.1.0 95% 未完成权重计算部分" />
+    <MESSAGE value="版本更新v1.1.0 100%" />
+    <option name="LAST_COMMIT_MESSAGE" value="版本更新v1.1.0 100%" />
   </component>
 </project>

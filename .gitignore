@@ -139,6 +139,7 @@ cython_debug/
 
 # nuitka pack
 release-exe/
+release-config/
 
 # config file
 record.dat
