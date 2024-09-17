@@ -111,8 +111,12 @@ float_window = None
 previous_state = 'normal'
 
 # 打开图片
-icon_image = Image.open("favicon.ico").resize((64, 64))
+icon_image = Image.open("favicon.ico").resize((32, 32))
 icon_photo = ImageTk.PhotoImage(icon_image)
+
+# RFA与NFT调节比例
+r_f = 0.5
+r_u = 0.5
 
 # 密钥
 key = b'\x16a\xca\xa7\xa4\n\xef\xc72{\x85\x88HJ\x1e3'
@@ -231,8 +235,9 @@ def flash_name() -> None:
             if not skip_calculate:
                 frequency[repeatable_name.index(selected)] += 1
                 for i in range(len(uncalled_times)):
+                
                     uncalled_times[i] += 1
-                uncalled_times[repeatable_name.index(selected)] -= 1
+                uncalled_times[repeatable_name.index(selected)] = 0
                 # print(frequency)
                 calculate_weight()
                 skip_calculate = True
@@ -271,37 +276,40 @@ def calculate_weight() -> None:
     """
     计算权重
     """
-    global frequency, weight, Feedback_intensity, unrepeatable_weight, unrepeatable_names, uncalled_times
+    global frequency, weight, Feedback_intensity, unrepeatable_weight, unrepeatable_names, uncalled_times, r_f, r_u
+    
+    # print(np.var(np.array(frequency)))
 
     total_f = 0
     average_f = (sum(frequency) / len(frequency)) + 1
+    hat_f = []
     for i in frequency:
         if i + 1 > average_f:
-            total_f += (1 / Feedback_intensity) / (i + 1)
+            hat_f.append(1 / (Feedback_intensity * (i + 1)))
+            total_f += hat_f[-1]
         elif i + 1 < average_f:
-            total_f += Feedback_intensity / (i + 1)
+            hat_f.append(Feedback_intensity / (i + 1))
+            total_f += hat_f[-1]
         else:
-            total_f += 1 / (i + 1)
+            hat_f.append(1 / (i + 1))
+            total_f += hat_f[-1]
 
     total_u = 0
     average_u = sum(uncalled_times) / len(uncalled_times) + 1
+    hat_u = []
     for i in uncalled_times:
         if i > average_u:
-            total_u += Feedback_intensity * (1 / (i + 1))
+            hat_u.append((i + 1) / Feedback_intensity)
+            total_u += hat_u[-1]
         elif i < average_u:
-            total_u += (1 / Feedback_intensity) * (1 / (i + 1))
+            hat_u.append(Feedback_intensity * (i + 1))
+            total_u += hat_u[-1]
         else:
-            total_u += 1 / (i + 1)
+            hat_u.append(i + 1)
+            total_u += hat_u[-1]
 
-    for w, f, u in zip(range(len(weight)), frequency, uncalled_times):
-        if f + 1 > average_f:
-            weight[w] = (((1 / Feedback_intensity) / (f + 1)) / total_f) * 0.5 + (
-                    Feedback_intensity * ((u + 1) / total_u)) * 0.5
-        elif f + 1 < average_f:
-            weight[w] = ((Feedback_intensity / (f + 1)) / total_f) * 0.5 + (
-                    (1 / Feedback_intensity) * ((u + 1) / total_u)) * 0.5
-        else:
-            weight[w] = ((1 / (f + 1)) / total_f) * 0.5 + ((u + 1) / total_u) * 0.5
+    for w, f, u in zip(range(len(weight)), hat_f, hat_u):
+        weight[w] = r_f * f / total_f + r_u * u / total_f
 
     unrepeatable_weight = []
     for i in unrepeatable_names:
@@ -313,76 +321,44 @@ def show_data() -> None:
     """
     展示统计数据
     """
-    global chart_exist, init_time, frequency, weight, Feedback_intensity, uncalled_times
-
-    # print(uncalled_times)
+    global chart_exist, init_time, frequency, weight, Feedback_intensity, uncalled_times, r_f, r_u
 
     total_f = 0
     average_f = (sum(frequency) / len(frequency)) + 1
+    hat_f = []
     for i in frequency:
         if i + 1 > average_f:
-            total_f += (1 / Feedback_intensity) / (i + 1)
+            hat_f.append(1 / (Feedback_intensity * (i + 1)))
+            total_f += hat_f[-1]
         elif i + 1 < average_f:
-            total_f += Feedback_intensity / (i + 1)
+            hat_f.append(Feedback_intensity / (i + 1))
+            total_f += hat_f[-1]
         else:
-            total_f += 1 / (i + 1)
+            hat_f.append(1 / (i + 1))
+            total_f += hat_f[-1]
 
     total_u = 0
     average_u = sum(uncalled_times) / len(uncalled_times) + 1
+    hat_u = []
     for i in uncalled_times:
-        if i > average_u:
-            total_u += Feedback_intensity * (1 / (i + 1))
-        elif i < average_u:
-            total_u += (1 / Feedback_intensity) * (1 / (i + 1))
+        if i + 1 > average_u:
+            hat_u.append(Feedback_intensity * (i + 1))
+            total_u += hat_u[-1]
+        elif i + 1 < average_u:
+            hat_u.append((i + 1) / Feedback_intensity)
+            total_u += hat_u[-1]
         else:
-            total_u += 1 / (i + 1)
+            hat_u.append(i + 1)
+            total_u += hat_u[-1]
 
-    for w, f, u in zip(range(len(weight)), frequency, uncalled_times):
-        if f + 1 > average_f:
-            weight[w] = (((1 / Feedback_intensity) / (f + 1)) / total_f) * 0.5 + (
-                    Feedback_intensity * ((u + 1) / total_u)) * 0.5
-        elif f + 1 < average_f:
-            weight[w] = ((Feedback_intensity / (f + 1)) / total_f) * 0.5 + (
-                    (1 / Feedback_intensity) * ((u + 1) / total_u)) * 0.5
-        else:
-            weight[w] = ((1 / (f + 1)) / total_f) * 0.5 + ((u + 1) / total_u) * 0.5
+    for w, f, u in zip(range(len(weight)), hat_f, hat_u):
+        weight[w] = r_f * f / total_f + r_u * u / total_f
 
     y1 = np.array(frequency)
     y2 = np.array(uncalled_times)
     y3 = np.array(weight)
 
-    # plt.figure(f'记录始于： {init_time}', figsize=(17, 7), dpi=100)
-    # rect1 = [0.05, 0.55, 0.92, 0.4]
-    # rect2 = [0.05, 0.06, 0.92, 0.4]
-    #
-    # ax1 = plt.axes(rect1)
-    # plt.bar(name_list, y1, color='green', label="总体频率")
-    # plt.axhline(y=average_f - 1, color='r', label="频率总体平均")
-    # plt.ylim(bottom=0)
-    # plt.ylabel('频率')
-    # plt.grid(axis='y')
-    # plt.xticks(rotation=45, fontsize=9)
-    # ax1.set_xlim(-1.0, len(name_list) + 0.1)
-    # plt.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
-    # label1 = ax1.get_xticklabels()
-    # for label in label1:
-    #     offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
-    #     label.set_transform(label.get_transform() + offset)
-    #
-    # ax2 = plt.axes(rect2)
-    # plt.bar(name_list, y2, color='red')
-    # plt.ylabel('权重')
-    # plt.grid(axis='y')
-    # plt.xticks(rotation=45, fontsize=9)
-    # ax2.set_xlim(-1.0, len(name_list) + 0.1)
-    # label2 = ax2.get_xticklabels()
-    # for label in label2:
-    #     offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
-    #     label.set_transform(label.get_transform() + offset)
-
-    # plt.xticks(rotation=45, fontsize=9)
-
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(17, 7), dpi=100, num=f'记录始于： {init_time}')
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(17, 7), dpi=100, num=f'记录始于： {init_time}  总计点名：{sum(frequency)}次')
 
     # ax1.bar(np.arange(len(x)) - 0.2, y1, width=0.4, color='g', label='sin(x)')
     ax1.bar(np.arange(len(name_list)) - 0.2, y1, width=0.4, color="green", label="频率")
@@ -439,12 +415,12 @@ def create_floating_icon() -> None:
     # 悬浮图标窗口
     float_window = tk.Toplevel()
     float_window.overrideredirect(True)  # 去掉窗口标题栏
-    float_window.geometry(f"64x64+{root.winfo_x()}+{root.winfo_y()}")  # 图标窗口的大小和初始位置
+    float_window.geometry(f"32x32+{root.winfo_x() + 117}+{root.winfo_y() + 1}")  # 图标窗口的大小和初始位置
     float_window.attributes("-topmost", True)  # 保持图标窗口在最前面
     float_window.focus_set()
 
     # 图标 Label
-    icon_label = tk.Label(float_window, image=icon_photo)
+    icon_label = tk.Label(float_window, image=icon_photo, cursor="fleur")
     icon_label.pack(side=tk.LEFT)
 
     # 拖动功能
@@ -463,7 +439,7 @@ def create_floating_icon() -> None:
     # 双击图标时恢复主窗口
     def on_double_click(event):
         root.deiconify()  # 恢复主窗口显示
-        root.geometry(f"+{float_window.winfo_x()}+{float_window.winfo_y()}")
+        root.geometry(f"+{float_window.winfo_x() - 117}+{float_window.winfo_y() - 1}")
         float_window.destroy()  # 关闭悬浮窗口
 
     icon_label.bind("<Double-1>", on_double_click)

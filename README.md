@@ -35,12 +35,15 @@
 - [x] 不重复启动
 - [x] 最小化为图标
 - [ ] 自定义频率调节与未被点名次数调节的比例
+- [ ] 自定义调节比例
+- [ ] 可视化调节效果
+- [ ] 自定义加密密钥
 
 #### 原理
 
 由于随机函数短期内的随机结果并不均匀，容易引起同学与老师们引入某些不切实际的猜想与偏见——认为随机点名并不“随机”。因此我们需要在保留随机功能的前提下对系统添加负反馈调节，即使用加权随机函数。  
   
-最先想到的方法是利用频率倒数调节法(Reciprocal frequency adjustment method, RFA)。即利用所有人被抽取的频率的倒数作为权重来调节，唯一需要注意的是需要处理的是频率为0的情况。在这里我选择在计算时将所有人的频率+1。即：
+最先想到的方法是利用频率倒数调节法(Reciprocal frequency adjustment method, RFA)。即利用所有人被抽取的频率的倒数作为权重来调节，唯一需要注意的是需要处理的是频率为0的情况。在这里我选择在计算时将所有人的频率加一。即：
 $$
 w=\frac{1}{f_n+1}
 $$
@@ -69,22 +72,30 @@ $$。
 $$
 w_n=r_f\cdot\frac{\hat f_n}{\Sigma f}+r_\mu\cdot\frac{\hat\mu_n}{\Sigma\mu}
 $$
-其中$r_f$、$r_\mu$分别为RFA调节与NLT调节的占比，$\hat\mu_n$为加入反馈的距离上一次被抽到的次数。若使用$\bar{\mu}$表示距离上一次被抽到的次数的总体平均，则$\hat\mu_n$可以表示为：
+其中$r_f$、$r_\mu$分别为RFA调节与NLT调节的占比，$\hat\mu_n$为加入反馈的距离上一次被抽到的次数。若使用$\bar{\mu}$表示距离上一次被抽到的次数的总体平均，用同样的方法处理初始情况下所有人的$\mu=0$的情况，则$\hat\mu_n$可以表示为：
 $$
 \hat\mu_n=\begin{cases}
-\ \frac{\Psi \mu_n}{\Sigma\mu}, & \mu_n < \bar\mu \\
-\ \frac{\mu_n}{\Psi\Sigma\mu}, & \mu_n > \bar\mu \\
-\ \frac{\mu}{\Sigma\mu}, & \mu_n = \bar\mu
+\ \frac{\Psi(\mu_n+1)}{\Sigma\mu}, & \mu_n < \bar\mu \\
+\ \frac{\mu_n+1}{\Psi\Sigma\mu}, & \mu_n > \bar\mu \\
+\ \frac{\mu+1}{\Sigma\mu}, & \mu_n = \bar\mu
 \end{cases}
 $$
 $\Sigma\mu$为：
 $$
 \Sigma\mu = \sum_{i=0}^{m} \begin{cases}
-\ \Psi\mu_i, & \mu_i < \bar{\mu} \\
-\ \frac{\mu_i}{\Psi}, & \mu_i > \bar{\mu} \\
-\ \mu_i, & \mu_i = \bar{\mu}
+\ \Psi(\mu_i+1), & \mu_i < \bar{\mu} \\
+\ \frac{\mu_i+1}{\Psi}, & \mu_i > \bar{\mu} \\
+\ \mu_i+1, & \mu_i = \bar{\mu}
 \end{cases}
 $$
+
+#### 效果
+
+不带负反馈调节的随机测试（控制台的输出结果是方差）：
+![img](img/自然随机%20重复%20100次.png)
+
+负反馈强度为3的随机测试（控制台的输出结果是方差）：
+![img](img/反馈随机%20重复%20100次.png)
 
 #### 参与贡献
 

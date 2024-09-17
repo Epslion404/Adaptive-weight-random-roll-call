@@ -64,6 +64,7 @@ def generate_config_file(entry1: tk.Entry, entry2: tk.Entry, entry3: tk.Entry, s
     """
     生成配置文件
     """
+    # 检测输入是否合法
     if entry1.get() == '' or entry2.get() == '' or entry3.get() == '':
         showerror("错误", "不能留空")
         return None
@@ -72,10 +73,23 @@ def generate_config_file(entry1: tk.Entry, entry2: tk.Entry, entry3: tk.Entry, s
     except ValueError:
         showerror("错误", "这不是数字")
         return None
+    finally:
+        if int(entry3.get()) <= 0:
+            showerror("错误", "负反馈强度不能小于0")
+
     name_list = entry1.get().split(entry2.get())
+    # 清除空名字
+    while True:
+        try:
+            i = name_list.index('')
+            name_list.pop(i)
+        except ValueError:
+            break
+
     show_name = ""
     for i in name_list:
         show_name += i + " "
+
     if not askyesno("提示", f"检测到{len(name_list)}个名字，是否继续？\n{show_name}"):
         return None
     if askyesno("提示", "是否加入当堂老师？"):
@@ -95,6 +109,10 @@ def generate_config_file(entry1: tk.Entry, entry2: tk.Entry, entry3: tk.Entry, s
             "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
             "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
             "init_time": time.strftime("%Y年%b %d日 %a %H:%M:%S", time.localtime())}
+
+    # data['语文']['frequency'][1] = 20
+    # data['语文']['uncalled_times'][5] = 20
+
     json_data = encrypt(json.dumps(data))
     # print(json.dumps(data))
     with open('record.dat', 'w', encoding='utf-8') as f:
