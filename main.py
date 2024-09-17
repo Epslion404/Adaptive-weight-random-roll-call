@@ -5,6 +5,7 @@
 
 import matplotlib.transforms as mtransforms
 import matplotlib.pyplot as plt
+from PIL import Image, ImageTk
 from Crypto.Cipher import AES
 import ttkbootstrap as tbs
 import tkinter.messagebox
@@ -37,6 +38,9 @@ unrepeatable_names = []
 
 # 总频率
 frequency: list = [0 for i in range(len(name_list))]
+
+# 未被点名次数
+uncalled_times: list = [0 for i in range(len(name_list))]
 
 # 总权重
 weight: list = [1.0 for j in range(len(name_list))]
@@ -99,6 +103,16 @@ DATA = {}
 
 # 课堂选择
 Subject = ''
+
+# 悬浮图标窗口
+float_window = None
+
+# 根窗口状态
+previous_state = 'normal'
+
+# 打开图片
+icon_image = Image.open("favicon.ico").resize((64, 64))
+icon_photo = ImageTk.PhotoImage(icon_image)
 
 # 密钥
 key = b'\x16a\xca\xa7\xa4\n\xef\xc72{\x85\x88HJ\x1e3'
@@ -176,7 +190,7 @@ def reset_none_repeat() -> None:
 
 
 def flash_name() -> None:
-    global pause_or_continue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, Feedback_intensity
+    global pause_or_continue, repeatable_name, selected, none_repeat, unrepeatable_names, none_repeat_text, frequency, skip_calculate, weight, unrepeatable_weight, enable_weight, uncalled_times
 
     # 同步权重
     for i in unrepeatable_names:
@@ -206,16 +220,19 @@ def flash_name() -> None:
             # 如果是不重复模式
             if none_repeat.get() == 1:
                 if selected in unrepeatable_names:
-                    if record_name_unrepeatable != []:
+                    if len(record_name_unrepeatable) != 0:
                         # print(NameSelect1)
                         record_name_unrepeatable[name_list.index(selected)].set(0)
                     unrepeatable_names.remove(selected)
                     skip_calculate = False
                 if not unrepeatable_names:
-                    random.seed(time.time())
+                    # random.seed(time.time())
                     unrepeatable_names = copy.deepcopy(repeatable_name)
             if not skip_calculate:
                 frequency[repeatable_name.index(selected)] += 1
+                for i in range(len(uncalled_times)):
+                    uncalled_times[i] += 1
+                uncalled_times[repeatable_name.index(selected)] -= 1
                 # print(frequency)
                 calculate_weight()
                 skip_calculate = True
@@ -254,24 +271,38 @@ def calculate_weight() -> None:
     """
     计算权重
     """
-    global frequency, weight, Feedback_intensity, unrepeatable_weight, unrepeatable_names
-    total = 0
-    average = (sum(frequency) / len(frequency)) + 1
+    global frequency, weight, Feedback_intensity, unrepeatable_weight, unrepeatable_names, uncalled_times
+
+    total_f = 0
+    average_f = (sum(frequency) / len(frequency)) + 1
     for i in frequency:
-        if i + 1 > average:
-            total += (1 / Feedback_intensity) / (i + 1)
-        elif i + 1 < average:
-            total += Feedback_intensity / (i + 1)
+        if i + 1 > average_f:
+            total_f += (1 / Feedback_intensity) / (i + 1)
+        elif i + 1 < average_f:
+            total_f += Feedback_intensity / (i + 1)
         else:
-            total += 1 / (i + 1)
-    for w, f in zip(range(len(weight)), frequency):
-        if f + 1 > average:
-            weight[w] = ((1 / Feedback_intensity) / (f + 1)) / total
-        elif f + 1 < average:
-            weight[w] = (Feedback_intensity / (f + 1)) / total
+            total_f += 1 / (i + 1)
+
+    total_u = 0
+    average_u = sum(uncalled_times) / len(uncalled_times) + 1
+    for i in uncalled_times:
+        if i > average_u:
+            total_u += Feedback_intensity * (1 / (i + 1))
+        elif i < average_u:
+            total_u += (1 / Feedback_intensity) * (1 / (i + 1))
         else:
-            weight[w] = (1 / (f + 1)) / total
-    # print(weight)
+            total_u += 1 / (i + 1)
+
+    for w, f, u in zip(range(len(weight)), frequency, uncalled_times):
+        if f + 1 > average_f:
+            weight[w] = (((1 / Feedback_intensity) / (f + 1)) / total_f) * 0.5 + (
+                    Feedback_intensity * ((u + 1) / total_u)) * 0.5
+        elif f + 1 < average_f:
+            weight[w] = ((Feedback_intensity / (f + 1)) / total_f) * 0.5 + (
+                    (1 / Feedback_intensity) * ((u + 1) / total_u)) * 0.5
+        else:
+            weight[w] = ((1 / (f + 1)) / total_f) * 0.5 + ((u + 1) / total_u) * 0.5
+
     unrepeatable_weight = []
     for i in unrepeatable_names:
         unrepeatable_weight.append(weight[repeatable_name.index(i)])
@@ -282,53 +313,105 @@ def show_data() -> None:
     """
     展示统计数据
     """
-    global chart_exist, init_time, frequency, weight, Feedback_intensity
-    total = 0
-    average = (sum(frequency) / len(frequency)) + 1
+    global chart_exist, init_time, frequency, weight, Feedback_intensity, uncalled_times
+
+    # print(uncalled_times)
+
+    total_f = 0
+    average_f = (sum(frequency) / len(frequency)) + 1
     for i in frequency:
-        if i + 1 > average:
-            total += (1 / Feedback_intensity) / (i + 1)
-        elif i + 1 < average:
-            total += Feedback_intensity / (i + 1)
+        if i + 1 > average_f:
+            total_f += (1 / Feedback_intensity) / (i + 1)
+        elif i + 1 < average_f:
+            total_f += Feedback_intensity / (i + 1)
         else:
-            total += 1 / (i + 1)
-    for w, f in zip(range(len(weight)), frequency):
-        if f + 1 > average:
-            weight[w] = ((1 / Feedback_intensity) / (f + 1)) / total
-        elif f + 1 < average:
-            weight[w] = (Feedback_intensity / (f + 1)) / total
+            total_f += 1 / (i + 1)
+
+    total_u = 0
+    average_u = sum(uncalled_times) / len(uncalled_times) + 1
+    for i in uncalled_times:
+        if i > average_u:
+            total_u += Feedback_intensity * (1 / (i + 1))
+        elif i < average_u:
+            total_u += (1 / Feedback_intensity) * (1 / (i + 1))
         else:
-            weight[w] = (1 / (f + 1)) / total
+            total_u += 1 / (i + 1)
+
+    for w, f, u in zip(range(len(weight)), frequency, uncalled_times):
+        if f + 1 > average_f:
+            weight[w] = (((1 / Feedback_intensity) / (f + 1)) / total_f) * 0.5 + (
+                    Feedback_intensity * ((u + 1) / total_u)) * 0.5
+        elif f + 1 < average_f:
+            weight[w] = ((Feedback_intensity / (f + 1)) / total_f) * 0.5 + (
+                    (1 / Feedback_intensity) * ((u + 1) / total_u)) * 0.5
+        else:
+            weight[w] = ((1 / (f + 1)) / total_f) * 0.5 + ((u + 1) / total_u) * 0.5
 
     y1 = np.array(frequency)
-    y2 = np.array(weight)
-    plt.figure(f'记录始于{init_time}。', figsize=(17, 7), dpi=100)
-    rect1 = [0.05, 0.55, 0.92, 0.4]
-    rect2 = [0.05, 0.06, 0.92, 0.4]
-    ax1 = plt.axes(rect1)
-    plt.bar(name_list, y1, color='green')
-    plt.axhline(y=average - 1, color='r', label="AVERAGE")
-    plt.ylim(bottom=0)
-    plt.ylabel('频率')
-    plt.grid(axis='y')
-    plt.xticks(rotation=45, fontsize=9)
-    ax1.set_xlim(-1.0, len(name_list) + 0.1)
-    label1 = ax1.get_xticklabels()
-    for label in label1:
-        offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
-        label.set_transform(label.get_transform() + offset)
+    y2 = np.array(uncalled_times)
+    y3 = np.array(weight)
 
-    ax2 = plt.axes(rect2)
-    plt.bar(name_list, y2, color='red')
-    plt.ylabel('权重')
-    plt.grid(axis='y')
-    plt.xticks(rotation=45, fontsize=9)
-    ax2.set_xlim(-1.0, len(name_list) + 0.1)
-    label2 = ax2.get_xticklabels()
-    for label in label2:
-        offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
-        label.set_transform(label.get_transform() + offset)
-    # ax2.text(1, 0.05, '纪录始于 ' + init_time, fontsize=10)
+    # plt.figure(f'记录始于： {init_time}', figsize=(17, 7), dpi=100)
+    # rect1 = [0.05, 0.55, 0.92, 0.4]
+    # rect2 = [0.05, 0.06, 0.92, 0.4]
+    #
+    # ax1 = plt.axes(rect1)
+    # plt.bar(name_list, y1, color='green', label="总体频率")
+    # plt.axhline(y=average_f - 1, color='r', label="频率总体平均")
+    # plt.ylim(bottom=0)
+    # plt.ylabel('频率')
+    # plt.grid(axis='y')
+    # plt.xticks(rotation=45, fontsize=9)
+    # ax1.set_xlim(-1.0, len(name_list) + 0.1)
+    # plt.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
+    # label1 = ax1.get_xticklabels()
+    # for label in label1:
+    #     offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
+    #     label.set_transform(label.get_transform() + offset)
+    #
+    # ax2 = plt.axes(rect2)
+    # plt.bar(name_list, y2, color='red')
+    # plt.ylabel('权重')
+    # plt.grid(axis='y')
+    # plt.xticks(rotation=45, fontsize=9)
+    # ax2.set_xlim(-1.0, len(name_list) + 0.1)
+    # label2 = ax2.get_xticklabels()
+    # for label in label2:
+    #     offset = mtransforms.ScaledTranslation(-1 / 72, 0.05, plt.gcf().dpi_scale_trans)
+    #     label.set_transform(label.get_transform() + offset)
+
+    # plt.xticks(rotation=45, fontsize=9)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(17, 7), dpi=100, num=f'记录始于： {init_time}')
+
+    # ax1.bar(np.arange(len(x)) - 0.2, y1, width=0.4, color='g', label='sin(x)')
+    ax1.bar(np.arange(len(name_list)) - 0.2, y1, width=0.4, color="green", label="频率")
+    ax1.set_ylabel("频率")
+    ax1.set_ylim(bottom=0)
+    ax1.set_xticks(np.arange(len(name_list)))
+    ax1.set_xticklabels(name_list, fontsize=10, rotation=45)
+
+    ax1_2 = ax1.twinx()
+    ax1_2.bar(np.arange(len(name_list)) + 0.2, y2, width=0.4, color="blue", label='距离上次未被抽到的次数')
+    ax1_2.set_ylabel('距离上次未被抽到的次数')
+    ax1_2.set_ylim(bottom=0)
+
+    ax1_2.axhline(y=average_f - 1, color='r', label="频率总体平均")
+
+    # ax1.legend(loc="lower center", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
+    # 显示图例
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax1_2.get_legend_handles_labels()
+    handles = handles1 + handles2
+    labels = labels1 + labels2
+    ax1.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+
+    ax2.bar(name_list, y3, color="red", label="权重")
+    ax2.set_ylabel("权重")
+    ax2.set_ylim(bottom=0)
+    ax2.set_xticklabels(name_list, fontsize=10, rotation=45)
+
+    plt.tight_layout()
     plt.show()
     plt.cla()
     plt.close('all')
@@ -347,15 +430,72 @@ def show_data_in_customize():
         chart_exist = True
 
 
+def create_floating_icon() -> None:
+    """
+    创建悬浮窗
+    """
+    global float_window, root, icon_photo
+
+    # 悬浮图标窗口
+    float_window = tk.Toplevel()
+    float_window.overrideredirect(True)  # 去掉窗口标题栏
+    float_window.geometry(f"64x64+{root.winfo_x()}+{root.winfo_y()}")  # 图标窗口的大小和初始位置
+    float_window.attributes("-topmost", True)  # 保持图标窗口在最前面
+    float_window.focus_set()
+
+    # 图标 Label
+    icon_label = tk.Label(float_window, image=icon_photo)
+    icon_label.pack(side=tk.LEFT)
+
+    # 拖动功能
+    def start_move(event):
+        float_window.x = event.x
+        float_window.y = event.y
+
+    def on_move(event):
+        x = float_window.winfo_x() + event.x - float_window.x
+        y = float_window.winfo_y() + event.y - float_window.y
+        float_window.geometry(f"+{x}+{y}")
+
+    icon_label.bind("<Button-1>", start_move)
+    icon_label.bind("<B1-Motion>", on_move)
+
+    # 双击图标时恢复主窗口
+    def on_double_click(event):
+        root.deiconify()  # 恢复主窗口显示
+        root.geometry(f"+{float_window.winfo_x()}+{float_window.winfo_y()}")
+        float_window.destroy()  # 关闭悬浮窗口
+
+    icon_label.bind("<Double-1>", on_double_click)
+    return None
+
+
+def check_window_state() -> None:
+    """
+    检查窗口状态的函数
+    """
+    global previous_state
+    current_state = root.wm_state()  # 获取当前窗口状态
+
+    if current_state == 'iconic' and previous_state != 'iconic':
+        root.withdraw()  # 隐藏主窗口
+        create_floating_icon()  # 显示悬浮图标
+
+    previous_state = current_state
+    root.after(100, check_window_state)
+    return None
+
+
 def customize_window_init() -> None:
     """
     初始化自定义窗口
     """
-    global customize_window, record_name_repeatable, repeatable_name, set_name_repeatable, enable_weight, record_name_unrepeatable, set_name_unrepeatable, chart_exist
+    global customize_window, record_name_repeatable, repeatable_name, set_name_repeatable, enable_weight, record_name_unrepeatable, set_name_unrepeatable, chart_exist, VERSION
 
     # 初始化自定义窗口
     customize_window = tk.Toplevel(root, width=800, height=600)
     customize_window.resizable(height=False, width=False)
+    customize_window.title(f"随机点名 - 版本{VERSION}")
     customize_window.attributes('-topmost', True)
     customize_window.protocol("WM_DELETE_WINDOW", setting_window_on_closing)
     customize_window.iconbitmap('favicon.ico')
@@ -446,10 +586,11 @@ def repeatable_name_group_update():
 
 
 def on_root_closing() -> None:
-    global root, customize_window, frequency, init_time, DATA
+    global root, customize_window, frequency, init_time, DATA, uncalled_times
     root.destroy()
     DATA[Subject]['non_repeat_name'] = unrepeatable_names
     DATA[Subject]['frequency'] = frequency
+    DATA[Subject]['uncalled_times'] = uncalled_times
     # print(Subject, frequency)
     # print(DATA[Subject]['frequency'])
     with open('record.dat', 'w', encoding='utf-8') as f:
@@ -471,9 +612,10 @@ def main() -> None:
     """
     初始化随机点名
     """
-    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pause_or_continue, DATA, Subject, name_list, repeatable_name, unrepeatable_names, shown_name, none_repeat_text, weight
+    global root, shown_name, repeatable_name, selected, none_repeat, none_repeat_text, customize_window, record_name_repeatable, unrepeatable_names, non_repeat_check_box, frequency, init_time, pause_or_continue, DATA, Subject, name_list, repeatable_name, unrepeatable_names, shown_name, none_repeat_text, weight, uncalled_times, Feedback_intensity
 
     if os.path.exists('running.dat'):
+        root.destroy()
         tkinter.messagebox.showinfo("提示", "随机点名已经在运行了")
         exit_exe()
     else:
@@ -482,20 +624,23 @@ def main() -> None:
         ctypes.windll.kernel32.SetFileAttributesW('running.dat', 0x02)
 
     def class_select_cb(index: int):
-        global Subject, DATA, unrepeatable_names, frequency
+        global Subject, DATA, unrepeatable_names, frequency, uncalled_times
         try:
             s = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
             Subject = s[index]
             unrepeatable_names = DATA[Subject]['non_repeat_name']
             frequency = DATA[Subject]['frequency']
-            select_window.destroy()
+            uncalled_times = DATA[Subject]['uncalled_times']
+            if ss == 1:
+                select_window.destroy()
         except Exception as e:
-            print(f'Error raised: {e}')
+            tkinter.messagebox.showerror("错误", f'Error raised: {e}')
             exit_exe()
         # 设置根窗口
         root.geometry("240x120+0+0")
         root.resizable(height=False, width=False)
         root.attributes('-topmost', True)
+        # root.attributes('-alpha', 0.2)
         # root.attributes('-toolwindow', True)
         root.protocol("WM_DELETE_WINDOW", on_root_closing)
         root.overrideredirect(False)
@@ -504,6 +649,7 @@ def main() -> None:
         flash_name_thread.daemon = True  # 守护模式
         flash_name_thread.start()
 
+        check_window_state()
         root.mainloop()
 
     # 定义样式
@@ -537,13 +683,14 @@ def main() -> None:
     with open('record.dat', 'r', encoding='utf-8') as f:
         try:
             DATA = json.loads(decrypt(f.read()))
-            # DATA = json.load(f)
             subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理', '其他']
             # for i in subjects:
             #     if len(DATA[i]) != 2:
             #         raise RuntimeError("Config file error")
             name_list = DATA["name_list"]
             init_time = DATA['init_time']
+            ss = DATA["Separate_subjects"]
+            Feedback_intensity = DATA["Feedback_intensity"]
             repeatable_name = copy.deepcopy(name_list)
             unrepeatable_names = copy.deepcopy(name_list)
             shown_name = tk.StringVar(value=random.choice(repeatable_name))
@@ -588,34 +735,38 @@ def main() -> None:
     reset_button.pack(side=tk.LEFT)
 
     init_window.destroy()  # 销毁加载窗口
-    select_window = tk.Tk()
-    select_window.geometry("180x120+50+50")
-    select_window.resizable(height=False, width=False)
-    select_window.attributes('-topmost', True)
-    label1 = tk.Label(select_window, text='选择当堂科目', font=("黑体", 20, "bold"), relief=tk.RIDGE)
-    label1.grid(row=0, columnspan=5, pady=5)
-    button01 = tk.Button(select_window, text="语文", command=lambda: class_select_cb(0))
-    button01.grid(row=1, column=0, pady=5)
-    button02 = tk.Button(select_window, text="数学", command=lambda: class_select_cb(1))
-    button02.grid(row=1, column=1, pady=5)
-    button03 = tk.Button(select_window, text="英语", command=lambda: class_select_cb(2))
-    button03.grid(row=1, column=2, pady=5)
-    button04 = tk.Button(select_window, text="物理", command=lambda: class_select_cb(3))
-    button04.grid(row=1, column=3, pady=5)
-    button05 = tk.Button(select_window, text="化学", command=lambda: class_select_cb(4))
-    button05.grid(row=1, column=4, pady=5)
-    button06 = tk.Button(select_window, text="生物", command=lambda: class_select_cb(5))
-    button06.grid(row=2, column=0, pady=5)
-    button07 = tk.Button(select_window, text="历史", command=lambda: class_select_cb(6))
-    button07.grid(row=2, column=1, pady=5)
-    button08 = tk.Button(select_window, text="政治", command=lambda: class_select_cb(7))
-    button08.grid(row=2, column=2, pady=5)
-    button09 = tk.Button(select_window, text="地理", command=lambda: class_select_cb(8))
-    button09.grid(row=2, column=3, pady=5)
-    button10 = tk.Button(select_window, text="其他", command=lambda: class_select_cb(9))
-    button10.grid(row=2, column=4, pady=5)
-    # print(DATA)
-    select_window.mainloop()
+
+    if ss == 0:
+        class_select_cb(0)
+    else:
+        select_window = tk.Tk()
+        select_window.geometry("180x120+50+50")
+        select_window.resizable(height=False, width=False)
+        select_window.attributes('-topmost', True)
+        label1 = tk.Label(select_window, text='选择当堂科目', font=("黑体", 20, "bold"), relief=tk.RIDGE)
+        label1.grid(row=0, columnspan=5, pady=5)
+        button01 = tk.Button(select_window, text="语文", command=lambda: class_select_cb(0))
+        button01.grid(row=1, column=0, pady=5)
+        button02 = tk.Button(select_window, text="数学", command=lambda: class_select_cb(1))
+        button02.grid(row=1, column=1, pady=5)
+        button03 = tk.Button(select_window, text="英语", command=lambda: class_select_cb(2))
+        button03.grid(row=1, column=2, pady=5)
+        button04 = tk.Button(select_window, text="物理", command=lambda: class_select_cb(3))
+        button04.grid(row=1, column=3, pady=5)
+        button05 = tk.Button(select_window, text="化学", command=lambda: class_select_cb(4))
+        button05.grid(row=1, column=4, pady=5)
+        button06 = tk.Button(select_window, text="生物", command=lambda: class_select_cb(5))
+        button06.grid(row=2, column=0, pady=5)
+        button07 = tk.Button(select_window, text="历史", command=lambda: class_select_cb(6))
+        button07.grid(row=2, column=1, pady=5)
+        button08 = tk.Button(select_window, text="政治", command=lambda: class_select_cb(7))
+        button08.grid(row=2, column=2, pady=5)
+        button09 = tk.Button(select_window, text="地理", command=lambda: class_select_cb(8))
+        button09.grid(row=2, column=3, pady=5)
+        button10 = tk.Button(select_window, text="其他", command=lambda: class_select_cb(9))
+        button10.grid(row=2, column=4, pady=5)
+        # print(DATA)
+        select_window.mainloop()
 
     return None
 

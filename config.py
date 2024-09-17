@@ -60,12 +60,17 @@ def decrypt(encrypted_text):
         return "Incorrect decryption"
 
 
-def generate_config_file(entry1: tk.Entry, entry2: tk.Entry) -> None:
+def generate_config_file(entry1: tk.Entry, entry2: tk.Entry, entry3: tk.Entry, separate_subjects: int) -> None:
     """
     生成配置文件
     """
-    if entry1.get() == '' or entry2.get() == '':
+    if entry1.get() == '' or entry2.get() == '' or entry3.get() == '':
         showerror("错误", "不能留空")
+        return None
+    try:
+        f = int(entry3.get())
+    except ValueError:
+        showerror("错误", "这不是数字")
         return None
     name_list = entry1.get().split(entry2.get())
     show_name = ""
@@ -77,18 +82,21 @@ def generate_config_file(entry1: tk.Entry, entry2: tk.Entry) -> None:
         name_list.append("当堂老师")
     data = {"name_list": name_list,
             "version": VERSION,
-            "语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "英语": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "物理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "化学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "生物": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "历史": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "政治": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
-            "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))]},
+            "Separate_subjects": separate_subjects,
+            "Feedback_intensity": int(entry3.get()),
+            "语文": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "数学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "英语": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "物理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "化学": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "生物": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "历史": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "政治": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "地理": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
+            "其他": {"non_repeat_name": name_list, "frequency": [0 for i in range(len(name_list))], "uncalled_times": [0 for j in range(len(name_list))]},
             "init_time": time.strftime("%Y年%b %d日 %a %H:%M:%S", time.localtime())}
     json_data = encrypt(json.dumps(data))
+    # print(json.dumps(data))
     with open('record.dat', 'w', encoding='utf-8') as f:
         f.write(json_data)
         f.close()
@@ -136,8 +144,21 @@ def main() -> None:
     entry2 = tk.Entry(generation, width=3)
     entry2.grid(row=2, column=1, pady=5)
 
-    button1 = tk.Button(generation, text="生成", command=lambda: generate_config_file(entry1, entry2))
-    button1.grid(row=3, column=2, pady=3)
+    label3 = tk.Label(generation, text="请设置负反馈强度(建议2~4)：")
+    label3.grid(row=3, column=0, pady=5)
+
+    entry3 = tk.Entry(generation, width=3)
+    entry3.grid(row=3, column=1, pady=5)
+
+    ss = tk.IntVar()
+    ss.set(0)
+
+    check_button = tk.Checkbutton(generation, text="分科记录数据", variable=ss)
+    check_button.grid(row=4, column=0)
+
+    button1 = tk.Button(generation, text="生成",
+                        command=lambda: generate_config_file(entry1, entry2, entry3, ss.get()))
+    button1.grid(row=4, column=2, pady=3)
 
     # 解析名单
     # analyse = tk.LabelFrame(root, text='解析配置文件')
