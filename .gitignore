@@ -145,3 +145,4 @@ release-config/
 record.dat
 running.dat
 .idea/workspace.xml
+keys.json
