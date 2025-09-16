@@ -27,14 +27,14 @@ You can either run the `main.py` file directly or use the packaged executable.
 
 - [x] Initialize the repository
 - [x] Make the old code more understandable (80%)
-- [ ] Fix bugs (e.g., child processes fail to exit after the main process ends)
+- [x] Fix bugs (e.g., child processes fail to exit after the main process ends)
 - [x] Encrypt the configuration file
 - [x] Adjust based on uncalled times
 - [x] Record data by category
 - [x] Store data in JSON format
 - [x] Prevent duplicate starts
 - [x] Minimize to tray icon
-- [ ] Customize the ratio of frequency adjustment to uncalled times adjustment
+- [x] Customize the ratio of frequency adjustment to uncalled times adjustment
 
 #### Principles
 

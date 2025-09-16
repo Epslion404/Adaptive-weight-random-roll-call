@@ -9,6 +9,7 @@
 .\.venv\Scripts\python.exe -m pip install matplotlib
 .\.venv\Scripts\python.exe -m pip install ttkbootstrap
 .\.venv\Scripts\python.exe -m pip install pycryptodome
+.\.venv\Scripts\python.exe -m pip install crypto
 .\.venv\Scripts\python.exe -m pip install Nuitka
 .\.venv\Scripts\python.exe -m pip install ordered-set
 .\.venv\Scripts\python.exe -m pip install zstandard
