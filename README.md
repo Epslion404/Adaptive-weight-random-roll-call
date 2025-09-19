@@ -1,6 +1,6 @@
 # 自适应权重随机点名
 
-[github](https://github.com/Epslion404/Adaptive-weight-random-roll-call)
+[Gitee](https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call) 
 
 #### 介绍
 
