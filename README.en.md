@@ -1,91 +1,129 @@
 # Adaptive Weighted Random Roll Call
 
-[GitHub](https://github.com/Epslion404/Adaptive-weight-random-roll-call)
+[GitHub](https://github.com/Epslion404/Adaptive-weight-random-roll-call)  
+**Note: This project uses the Lucky Block MOD from Minecraft as the icon. If there are any usage issues, please notify me immediately.**
 
-#### Introduction
+## Introduction
 
-A more equitable random roll call system designed for short-term fairness.  
-**This project uses the Lucky Block MOD from Minecraft as an icon. Please notify me immediately if this cannot be used.**
+A short-term fairer random roll call system designed to improve equity in selection processes. By introducing adaptive weighting mechanisms, it reduces short-term unevenness in random results and minimizes potential biases.
 
-#### Software Architecture
+## Software Architecture
 
-Developed with Python 3.8.
+Built with Python 3.8.
 
-#### Installation Guide
+## Installation Guide
 
-1. Install Python 3.8.
-2. Run the `install modules.bat` file to install the required libraries.
-3. Follow the instructions in `main.py` to input the list of names and delimiter.
-4. Execute the `main.py` file to ensure the program runs correctly.
-5. Use the command `pyinstaller -F -w -i favicon.ico main.py` or run `pack to exe.bat` to package the program into an executable file.
+1. Install Python 3.8 or later
+2. Run `install modules.bat` to install required dependencies
+3. Configure the name list and delimiter in `main.py` as instructed
+4. Test run `main.py` to verify proper execution
+5. Package into executable using: `pyinstaller -F -w -i favicon.ico main.py` 
+   or simply run `pack to exe.bat`
 
-#### Usage Instructions
+## Usage
 
-You can either run the `main.py` file directly or use the packaged executable.
+Run `main.py` directly or launch the packaged executable.
 
-#### TO DO
+## Development Progress
 
-- [x] Initialize the repository
-- [x] Make the old code more understandable (80%)
-- [x] Fix bugs (e.g., child processes fail to exit after the main process ends)
-- [x] Encrypt the configuration file
-- [x] Adjust based on uncalled times
-- [x] Record data by category
-- [x] Store data in JSON format
-- [x] Prevent duplicate starts
-- [x] Minimize to tray icon
-- [x] Customize the ratio of frequency adjustment to uncalled times adjustment
+- [x] Initialize repository
+- [x] Refactor legacy code (80% comprehensibility)
+- [x] Fix bugs (child process termination after main process ends)
+- [x] Encrypt configuration files
+- [x] Implement adjustment based on uncalled times
+- [x] Category-based data recording
+- [x] JSON format data storage
+- [x] Prevent duplicate launches
+- [x] Minimize to system tray
+- [x] Customizable ratio between frequency adjustment and uncalled times adjustment
+- [x] Custom adjustment ratios
+- [ ] Visualization of adjustment effects
+- [ ] Custom encryption keys
 
-#### Principles
+## Algorithm Principles
 
-Random functions can produce uneven results in the short term, leading to unrealistic assumptions and biases about randomness in roll calls. To address this while maintaining randomness, we introduce a negative feedback mechanism using weighted random functions.
+Conventional random functions often produce uneven short-term results, leading to unrealistic assumptions about "randomness". Our solution incorporates negative feedback through weighted random functions.
 
-The initial approach involves using the Reciprocal Frequency Adjustment method (RFA). This method adjusts the weights based on the reciprocal of each individual's selection frequency. To handle cases where the frequency is zero, we add 1 to everyone's frequency during calculations:
+### Primary Method: Reciprocal Frequency Adjustment (RFA)
+Uses inverse frequency as weighting factor, with +1 adjustment for zero-frequency cases:
+
 $$
 w = \frac{1}{f_n + 1}
 $$
-Controlling the intensity of feedback adjustment is also crucial. By introducing a negative feedback strength $\Psi$, the weight can be expressed as:
+
+With feedback strength $\Psi$, the weight becomes:
+
 $$
 w_n = \frac{\hat f_n}{\Sigma f}
 $$
-where $\hat f_n$ represents the frequency with feedback included. If $\bar{f}$ denotes the overall average frequency, then $\hat f_n$ is defined as:
+
+Where $\hat f_n$ represents frequency with feedback:
+
 $$
-\hat f_n=\begin{cases}
-\ \frac{\Psi}{f_n + 1}, & f_n < \bar{f} \\
-\ \frac{1}{\Psi(f_n + 1)}, & f_n > \bar{f} \\
-\ \frac{1}{f_n + 1}, & f_n = \bar{f}
-\end{cases}
-$$  
-The sum $\Sigma f$ is:
-$$
-\Sigma f = \sum_{i=0}^{m} \begin{cases}
-\ \frac{\Psi}{f_i + 1}, & f_i < \bar{f} \\
-\ \frac{1}{\Psi(f_i + 1)}, & f_i > \bar{f} \\
-\ \frac{1}{f_i + 1}, & f_i = \bar{f}
+\hat f_n = \begin{cases}
+\frac{\Psi}{f_n + 1}, & f_n < \bar{f} \\
+\frac{1}{\Psi(f_n + 1)}, & f_n > \bar{f} \\
+\frac{1}{f_n + 1}, & f_n = \bar{f}
 \end{cases}
 $$
 
-However, as the software is used over time, it is often observed that a student might not be selected for an extended period, only to be frequently chosen in a short span after a long period, leading their individual frequency to quickly align with the average. Therefore, in addition to macro adjustments, micro adjustments are necessary. To address this, we record the number of times each student has been skipped since their last selection ($\mu$) and adjust accordingly (NLT). In this context, the weight is expressed as:
+And $\Sigma f$ denotes:
+
+$$
+\Sigma f = \sum_{i=0}^{m} \begin{cases}
+\frac{\Psi}{f_i + 1}, & f_i < \bar{f} \\
+\frac{1}{\Psi(f_i + 1)}, & f_i > \bar{f} \\
+\frac{1}{f_i + 1}, & f_i = \bar{f}
+\end{cases}
+$$
+
+### Enhanced Method: Number of Times Since Last Call (NLT)
+Addresses prolonged non-selection periods by tracking times since last call ($\mu$):
+
 $$
 w_n = r_f \cdot \frac{\hat f_n}{\Sigma f} + r_\mu \cdot \frac{\hat \mu_n}{\Sigma \mu}
 $$
-where $r_f$ and $r_\mu$ represent the proportions of RFA and NLT adjustments, respectively. $\hat \mu_n$ represents the number of times skipped since the last call with feedback. If $\bar{\mu}$ denotes the overall average number of times skipped, then $\hat \mu_n$ is defined as:
+
+Where $r_f$ and $r_\mu$ represent RFA and NLT ratios respectively, and $\hat \mu_n$ incorporates feedback:
+
 $$
-\hat \mu_n=\begin{cases}
-\ \frac{\Psi \mu_n}{\Sigma \mu}, & \mu_n < \bar{\mu} \\
-\ \frac{\mu_n}{\Psi \Sigma \mu}, & \mu_n > \bar{\mu} \\
-\ \frac{\mu}{\Sigma \mu}, & \mu_n = \bar{\mu}
+\hat \mu_n = \begin{cases}
+\frac{\Psi(\mu_n + 1)}{\Sigma \mu}, & \mu_n < \bar{\mu} \\
+\frac{\mu_n + 1}{\Psi \Sigma \mu}, & \mu_n > \bar{\mu} \\
+\frac{\mu + 1}{\Sigma \mu}, & \mu_n = \bar{\mu}
 \end{cases}
 $$
-The sum $\Sigma \mu$ is:
+
+With $\Sigma \mu$ calculated as:
+
 $$
 \Sigma \mu = \sum_{i=0}^{m} \begin{cases}
-\ \Psi \mu_i, & \mu_i < \bar{\mu} \\
-\ \frac{\mu_i}{\Psi}, & \mu_i > \bar{\mu} \\
-\ \mu_i, & \mu_i = \bar{\mu}
+\Psi(\mu_i + 1), & \mu_i < \bar{\mu} \\
+\frac{\mu_i + 1}{\Psi}, & \mu_i > \bar{\mu} \\
+\mu_i + 1, & \mu_i = \bar{\mu}
 \end{cases}
 $$
 
-#### Contributions
+## Performance Comparison
 
-As of now, there are no additional contributors besides myself φ(゜▽゜*)♪
+### Legacy Version
+**Without feedback** (console output shows variance):  
+![img](img/自然随机%20重复%20100次.png)
+
+**With feedback (Ψ=3)**:  
+![img](img/反馈随机%20重复%20100次.png)
+
+### Current Version
+**Without feedback** (frequency variance: 0.846):  
+![img](img/新版%20自然随机%2026次.png)
+
+**With feedback (Ψ=2, $r_u = r_f = 0.5$)** (variance: 0.308):  
+![img](img/新版%20反馈随机%2026次.png)
+
+## Contributions
+
+Currently maintained solely by myself φ(゜▽゜*)♪  
+Contributions and suggestions are welcome!
+
+---
+*Note: This project is designed for educational environments where short-term fairness in random selection is desired. The algorithm ensures that while maintaining randomness, the selection distribution becomes more balanced over time.*
