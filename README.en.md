@@ -1,6 +1,6 @@
 # Adaptive Weighted Random Roll Call
 
-[GitHub](https://github.com/Epslion404/Adaptive-weight-random-roll-call)  
+[Gitee](https://github.com/Epslion404/Adaptive-weight-random-roll-call](https://gitee.com/Nept-Epslion/Adaptive-weight-random-roll-call)  
 **Note: This project uses the Lucky Block MOD from Minecraft as the icon. If there are any usage issues, please notify me immediately.**
 
 ## Introduction
